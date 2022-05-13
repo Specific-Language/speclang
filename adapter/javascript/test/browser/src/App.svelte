@@ -1,13 +1,14 @@
 <script>
-  import init, { parse } from "../../../dist/speclang.es";
+  import { parse } from "speclang";
 
-  let input = `test { \n  attr = 123\n}`;
+  let input = `test {
+    hello world {}
+    foo = "bar"
+  }`;
   let output;
 
   async function test() {
-    // todo: can we get around await init()
-    await init();
-    output = parse(input);
+    output = await parse(input);
   }
 </script>
 
