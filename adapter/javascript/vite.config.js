@@ -1,19 +1,15 @@
-// vite.config.js
-const path = require("path");
-const { defineConfig } = require("vite");
+import { defineConfig } from "vite";
+import { resolve } from "path";
 
-module.exports = defineConfig({
+export default defineConfig({
   build: {
     lib: {
-      entry: path.resolve(__dirname, "src/main.ts"),
+      entry: resolve(__dirname, "src/speclang.ts"),
       name: "speclang",
-      fileName: (format) => `speclang.${format}.js`,
+      fileName: (format) => "speclang" + (format === "es" ? ".mjs" : ".js"),
     },
     rollupOptions: {
       external: ["typescript"],
-      output: {
-        exports: "named",
-      },
     },
   },
 });
