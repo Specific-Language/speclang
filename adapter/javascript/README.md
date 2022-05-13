@@ -1,18 +1,20 @@
-# speclang Javascript adapter 
+# speclang javascript adapter
 
-## Dependencies
+[link to source repository](https://github.com/Specific-Language/speclang)
 
 - Typescript
 - Vite
 - WebAssembly
 
-## Supported runtimes
+## build
 
-### Browser
+- `$ npm run build`
 
-- Work in progress
+## tests
 
-### Node/ESM
+- `$ cd test/node && npm t`
+- `$ cd test/browser && npm run dev`
 
-- [WASM is not limited to browser](https://nodejs.dev/learn/nodejs-with-webassembly)
-- Work in progress
+## release
+
+- `$ npm publish`
