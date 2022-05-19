@@ -1,11 +1,17 @@
 # speclang
 
-## outputs
+## test
 
-### wasm (todo: automate build)
+- `$ cargo test`
 
-1. `$ wasm-pack build --target=bundler`
-2. edit `pkg/speclang_bg.js`
+## build wasm
+
+- `$ wasm-pack build --target=bundler`
+- (optional) build preferred speclang adapter
+
+### JS build steps (todo: automate or move into adapter/javascript)
+
+1. edit `pkg/speclang_bg.js`
 
 | line                       | before                                        | after                                                  |
 | -------------------------- | --------------------------------------------- | ------------------------------------------------------ |
@@ -13,5 +19,4 @@
 | wasm_bindgen method export | `export function parse(input) {`              | `export async function parse(input) {`                 |
 | wasm_bindgen method body   | insert at start of each method body           | `if (!wasm) { wasm = await initWasm(); }`              |
 
-3. edit `pkg/speclang.d.ts` to make every wasm_bindgen method return a `Promise` result
-4. build preferred speclang adapter(s)
+2. edit `pkg/speclang.d.ts` to make every wasm_bindgen method return a `Promise` result
