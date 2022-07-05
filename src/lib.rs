@@ -10,33 +10,40 @@ pub mod speclang {
   #[wasm_bindgen]
   pub fn parse(raw_input: &str) -> String {
     let input = format!("input {{{}}}", raw_input);
-    let hcl: Value = hcl::from_str(&input).unwrap();
-    let spec: Value = hydrate(&hcl);
-    spec.to_string()
+
+    // collapsed error handling because main fn must return string
+    let hcl = match hcl::from_str(&input) {
+      Ok(json) => json,
+      Err(error) => json!({ "error": error.to_string() }),
+    };
+
+    hcl.to_string()
   }
 
-  fn hydrate(input_json: &Value) -> Value {
-    let mut output = json!({});
-    let input = input_json.as_object().unwrap();
-    if input.len() > 1 {
-      for (key, value) in input {
-        match key.as_str() {
-          // "extends" => extends(&mut output, value),
-          _ => identity(&mut output, key, value),
-        }
-      }
-    } else if input.len() == 1 {
-      let single = input.keys().next().unwrap();
-      output[single] = match single.as_str() {
-        &_ => json!(input[single]), //lookup(single),
-      }
-    }
-    output
-  }
+  // todo: Global Context { declare, modules, etc } Rust Type
 
-  fn identity(output: &mut Value, key: &str, value: &Value) {
-    output[key] = hydrate(value);
-  }
+  // fn hydrate(input: &Value, modules: &Value) -> Value {
+  //   let mut output = json!({});
+  //   let input_object = input.as_object().unwrap();
+  //   if input_object.len() > 1 {
+  //     for (key, value) in input_object {
+  //       match key.as_str() {
+  //         "declare" => declare(&mut output, value),
+  //         _ => identity(&mut output, key, value),
+  //       }
+  //     }
+  //   } else if input_object.len() == 1 {
+  //     let single = input_object.keys().next().unwrap();
+  //     output[single] = match single.as_str() {
+  //       &_ => json!(input_object[single]), //lookup(single),
+  //     }
+  //   }
+  //   output
+  // }
+
+  // fn identity(output: &mut Value, key: &str, value: &Value) {
+  //   output[key] = hydrate(value);
+  // }
 
   // fn lookup(input: &str) -> Value {
   //   // todo: actually lookup singles somewhere
@@ -48,34 +55,57 @@ pub mod speclang {
   //   }
   // }
 
-  #[cfg(test)]
-  mod test {
-    use super::*;
+  // fn declare(output: &mut Value, value: &Value) {
+  //   let props = value.as_object().unwrap().keys();
+  //   if props.len() != 1 {
+  //     println!("{}", props.last().unwrap());
+  //     panic!("unhandled: 'declare' did not find single property")
+  //   }
+  //   let namespace = props.last().unwrap();
+  //   output["modules"][namespace] = hydrate(&value[namespace]);
+  // }
 
-    #[test]
-    fn assignment() {
-      let input = "foo = \"bar\"";
-      let output = parse(input);
-      let expected_output = json!({
-        "input": {
-          "foo": "bar"
-        }
-      })
-      .to_string();
-      assert_eq!(output, expected_output);
-    }
+  // #[cfg(test)]
+  // mod test {
+  //   use super::*;
 
-    #[test]
-    fn block() {
-      let input = "foo {}";
-      let output = parse(input);
-      let expected_output = json!({
-        "input": {
-          "foo": {}
-        }
-      })
-      .to_string();
-      assert_eq!(output, expected_output);
-    }
-  }
+  //   #[test]
+  //   fn assignment() {
+  //     let input = "foo = \"bar\"";
+  //     let output = parse(input);
+  //     let expected_output = json!({
+  //       "declare": {
+  //         "foo": "bar"
+  //       }
+  //     })
+  //     .to_string();
+  //     assert_eq!(output, expected_output);
+  //   }
+
+  //   #[test]
+  //   fn block() {
+  //     let input = "foo {}";
+  //     let output = parse(input);
+  //     let expected_output = json!({
+  //       "declare": {
+  //         "foo": {}
+  //       }
+  //     })
+  //     .to_string();
+  //     assert_eq!(output, expected_output);
+  //   }
+
+  //   #[test]
+  //   fn declare() {
+  //     let input = "declare foo {}";
+  //     let output = parse(input);
+  //     let expected_output = json!({
+  //       "modules": {
+  //         "foo": {}
+  //       }
+  //     })
+  //     .to_string();
+  //     assert_eq!(output, expected_output);
+  //   }
+  // }
 }
