@@ -1,55 +1,29 @@
-import { parse } from "speclang";
+import { Context, parse, lookup } from 'speclang';
+
+// const language = `
+// object primitive {}
+
+// specification object {}
+// `
 
 const testInput = `
-list primitive {
-  // -> magic -> JS array
-}
+// point {
+//   x number {}
+//   y number {}
+// }
+z number {}
+// location point {
+//   x gps-lat {}
+//   y gps-lon {}
+// }
+// origin point {
+//   x = 0
+//   y = 0
+// }
+`
 
-object primitive {
-  // -> magic -> JS object
-}
+const context = new Context()
+await parse(context, testInput)
 
-hcl2 {
-  block {
-    name string {}
-    value {}
-  }
-  attribute {
-    name string {}
-    value hcl2-expression {}
-  }
-  expression string {
-    // functions, variables, primitive values, etc.
-    // anything after the =
-  }
-}
-
-specification hcl2-block {
-  value-entries each constraint {}
-}
-
-constraint {
-  value {}
-  pattern {
-    test = value
-  }
-}
-
-pattern {
-  test speclang-expression {}
-  match speclang-function {
-    input = test
-    output = true
-  }
-}
-`;
-
-const context = await parse.string(testInput);
-
-console.log(JSON.stringify(context, null, 4));
-
-// const result = await context.lookup({
-//   x: 123,
-//   y: 321,
-// })
-// console.log(JSON.stringify(result, null, 4));
+const result = lookup(context, 5)
+console.log(JSON.stringify(result, null, 4))

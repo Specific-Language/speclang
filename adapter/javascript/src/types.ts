@@ -1,10 +1,37 @@
-export type Specification = {
-  [x: string]: Value
-}
+export type $Value =
+  | $Primitive
+  | $Object
+  | $Value[]
 
-export type Value =
+export type $Primitive =
   | string
   | number
   | boolean
-  | Specification
-  | Value[]
+  | null
+
+export type $Object = {
+  [name: string]: $Value
+}
+
+export type $Definition = {
+  value: $Value,
+  id: string,
+  parent_id?: string
+}
+
+export type $DefinitionTable = {
+  [key: string]: $Definition[]
+}
+
+export type $Event = {
+  name: string,
+  time: string,
+}
+
+export type $EventTable = {
+  [name: string]: $Event
+}
+
+export type $Match = {
+  [name: string]: $Definition
+}
