@@ -14,7 +14,6 @@ export type $Object = {
 }
 
 export type $Definition = {
-  name: string,
   value: $Value,
   id: string,
   parent_id?: string

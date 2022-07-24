@@ -7,8 +7,11 @@ import type { Context } from './context'
  * recursively defines any children
  */
 export function define(context: Context, name: string, value: $Value, metadata: $Object = {}): void {
-  const definition = compose$definition(name, value, metadata)
-  context.dictionary.push(name, definition)
+  const definition = compose$definition(value, metadata)
+  if (context.dictionary[name] === undefined) {
+    context.dictionary[name] = []
+  }
+  context.dictionary[name].push(definition)
   context.events[definition.id] = {
     name,
     time: new Date().toISOString(),
@@ -23,10 +26,9 @@ export function define(context: Context, name: string, value: $Value, metadata: 
   }
 }
 
-export function compose$definition(name: string, value: $Value, metadata: $Object): $Definition {
+export function compose$definition(value: $Value, metadata: $Object): $Definition {
   const id = Math.random().toPrecision(5).substring(2).padEnd(6, '0') // todo : this obv isn't enough
   const definition: $Definition = {
-    name,
     value,
     id,
     ...metadata,
