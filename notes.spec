@@ -3,11 +3,25 @@
 // example : string : { value, get, set, length }
 
 list primitive {
-  // -> magic -> JS array
+  // -> magic -> array
 }
 
 object primitive {
-  // -> magic -> JS object
+  // -> magic -> object
+}
+
+speclang {
+  value {
+    // -> magic -> value
+  }
+  expression string {
+    // -> magic -> expression
+  }
+  function {
+    input expression {}
+    eval expression {}
+    output value {}
+  }
 }
 
 hcl2 {
