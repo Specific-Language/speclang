@@ -1,4 +1,4 @@
-import type { $Definition, $DefinitionTable, $EventTable } from '../types'
+import type { $Definition, $DefinitionTable, $EventTable } from './types'
 
 export class Context {
   dictionary = new Dictionary()
@@ -7,6 +7,7 @@ export class Context {
 
 export class Dictionary {
   map: $DefinitionTable = {}
+
   get = (key: string) => this.map[key] ?? []
   push = (key: string, value: $Definition) => {
     if (this.map[key] === undefined) {

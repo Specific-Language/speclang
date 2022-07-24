@@ -1,5 +1,5 @@
-import type { $Definition, $Object, $Value } from '../types'
-import { Context } from '.'
+import type { $Definition, $Object, $Value } from './types'
+import type { Context } from './context'
 
 /** define
  * pushes a new definition to the dictionary w/the ID
@@ -7,7 +7,7 @@ import { Context } from '.'
  * recursively defines any children
  */
 export function define(context: Context, name: string, value: $Value, metadata: $Object = {}): void {
-  const definition = compose$definition(value, metadata)
+  const definition = compose$definition(name, value, metadata)
   context.dictionary.push(name, definition)
   context.events[definition.id] = {
     name,
@@ -23,12 +23,13 @@ export function define(context: Context, name: string, value: $Value, metadata: 
   }
 }
 
-export function compose$definition(value: $Value, metadata: $Object): $Definition {
+export function compose$definition(name: string, value: $Value, metadata: $Object): $Definition {
   const id = Math.random().toPrecision(5).substring(2).padEnd(6, '0') // todo : this obv isn't enough
   const definition: $Definition = {
-    ...metadata,
+    name,
     value,
     id,
+    ...metadata,
   }
   return definition
 }

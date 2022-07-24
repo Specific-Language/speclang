@@ -1,6 +1,6 @@
-import type { $Object } from '../types'
-import * as speclang from '../../../../pkg/speclang'
-import { Context } from '.'
+import * as speclang from '../../../pkg/speclang'
+import type { $Object } from './types'
+import { Context } from './context'
 import { define } from './define'
 
 export async function parse(context: Context, input: string): Promise<void> {

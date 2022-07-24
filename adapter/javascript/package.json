@@ -16,8 +16,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build --outDir=./dist && npm run build:copyTypes",
-    "build:copyTypes": "shx cp ../../pkg/speclang.d.ts ./dist/speclang.d.ts",
+    "build": "(vite build --outDir=./dist) && (tsc --emitDeclarationOnly)",
     "preview": "vite preview"
   },
   "devDependencies": {

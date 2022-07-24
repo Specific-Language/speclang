@@ -1,11 +1,11 @@
-import { Context } from '.'
-import { $Definition, $Primitive, $Object, $Value, $Match } from '../types'
+import type { $Definition, $Primitive, $Object, $Value } from './types'
+import type { Context } from './context'
 
 /** lookup
  * takes any JSON value
  * returns any matching definitions
  */
-export function lookup(context: Context, value: $Value): Array<$Match> {
+export function lookup(context: Context, value: $Value): Array<$Definition> {
   if (value instanceof Array) {
     throw Error('unhandled case: lookup: array')
   }
@@ -19,14 +19,11 @@ export function lookup(context: Context, value: $Value): Array<$Match> {
  * for each key, look up definitions
  * for each definition, check its parent for a match
  */
-export function lookup_object(context: Context, value: $Object): Array<$Match> {
-  const result = new Array<$Match>()
+export function lookup_object(context: Context, value: $Object): Array<$Definition> {
+  const result = new Array<$Definition>()
   Object.keys(value).forEach((key) => {
     context.dictionary.get(key).forEach((definition) => {
-      const match = {
-        [key]: definition
-      }
-      array_push_unique(result, match)
+      array_push_unique(result, definition)
       if (definition.parent_id) {
         const parent_definitions = lookup_id(context, definition.parent_id)
         // todo: filter to matching definitions
@@ -43,11 +40,10 @@ export function lookup_object(context: Context, value: $Object): Array<$Match> {
  * non-array, non-object values
  * primitives must have a parent
  */
-export function lookup_primitive(context: Context, value: $Primitive): Array<$Match> {
-  const result = new Array<$Match>()
+export function lookup_primitive(context: Context, value: $Primitive): Array<$Definition> {
+  const result = new Array<$Definition>()
   const definitions = context.dictionary.get(typeof value)
-  const matches = definitions.map((d) => composeMatch(typeof value, d))
-  array_concat_unique(result, matches)
+  array_concat_unique(result, definitions)
   definitions.forEach((definition) => {
     if (!definition.parent_id) {
       throw Error('lookup_primitive: Expected primitive type to have a parent')
@@ -58,14 +54,13 @@ export function lookup_primitive(context: Context, value: $Primitive): Array<$Ma
   return result
 }
 
-export function lookup_id(context: Context, id: string): Array<$Match> {
+export function lookup_id(context: Context, id: string): Array<$Definition> {
   const event = context.events[id]
   if (!event) {
     throw Error('lookup_object: Expected to find event')
   }
   const definitions = context.dictionary.get(event.name)
-  const matches = definitions.map((d) => composeMatch(event.name, d))
-  return matches
+  return definitions
 }
 
 function array_push_unique<T>(output: Array<T>, input: T) {
@@ -76,10 +71,4 @@ function array_push_unique<T>(output: Array<T>, input: T) {
 
 function array_concat_unique<T>(output: Array<T>, input: Array<T>) {
   input.forEach((element) => array_push_unique(output, element))
-}
-
-function composeMatch(name: string, definition: $Definition): $Match {
-  return {
-    [name]: definition
-  }
 }
