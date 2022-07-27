@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Context } from "speclang"
-  import type { $DefinitionTable } from "speclang/dist/types";
-  import { lookup } from "speclang";
+  import type { $Dictionary } from "speclang/dist/types";
+  import { identify } from "speclang";
   
   export let context: Context
-  export let matches: $DefinitionTable
+  export let matches: $Dictionary
 
   let rawInput = {
     x: -0.314159265358979323846264338,
@@ -16,7 +16,7 @@
   async function handleTest(context: Context, testInput: string) {
     try {
       const test = JSON.parse(testInput)
-      matches = lookup(context, test)
+      matches = identify(context, test)
       inputError = ''
     } catch (err) {
       console.log('test input error', err)

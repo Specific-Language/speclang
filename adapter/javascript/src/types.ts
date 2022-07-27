@@ -19,15 +19,6 @@ export type $Definition = {
   parent_id?: string
 }
 
-export type $DefinitionTable = {
-  [key: string]: $Definition[]
-}
-
-export type $Event = {
-  name: string,
-  time: string,
-}
-
-export type $EventTable = {
-  [name: string]: $Event
+export type $Dictionary = {
+  [name: string]: $Definition[]
 }

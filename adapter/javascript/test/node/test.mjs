@@ -1,4 +1,4 @@
-import { Context, parse, lookup } from 'speclang';
+import { Context, parse, identify } from 'speclang';
 
 // const language = `
 // object primitive {}
@@ -7,11 +7,10 @@ import { Context, parse, lookup } from 'speclang';
 // `
 
 const testInput = `
-// point {
-//   x number {}
-//   y number {}
-// }
-z number {}
+define point {
+  x number {}
+  y number {}
+}
 // location point {
 //   x gps-lat {}
 //   y gps-lon {}
@@ -23,7 +22,10 @@ z number {}
 `
 
 const context = new Context()
-await parse(context, testInput)
+await parse(context, testInput, {
+  verbose: true
+})
+console.log(JSON.stringify(context))
 
-const result = lookup(context, 5)
+const result = identify(context, 5)
 console.log(JSON.stringify(result, null, 4))
