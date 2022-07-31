@@ -1,4 +1,4 @@
 export * from './types'
 export * from './context'
-export * from './parse'
+export * from './specify'
 export * from './identify'

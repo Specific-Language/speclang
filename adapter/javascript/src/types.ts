@@ -10,15 +10,23 @@ export type $Primitive =
   | null
 
 export type $Object = {
-  [name: string]: $Value
+  [name: string]: $Value,
 }
 
 export type $Definition = {
-  value: $Value,
+  input: $Value,
+  define: string[],
+  extend: string[],
   id: string,
-  parent_id?: string
+  parent_id?: string,
 }
 
 export type $Dictionary = {
-  [name: string]: $Definition[]
+  [name: string]: $Definition[],
 }
+
+export type $Specification = $Object & {
+  define?: $Specification,
+}
+
+// export type $Identifier = `${string}-${string}`

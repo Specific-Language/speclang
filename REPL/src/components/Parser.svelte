@@ -7,10 +7,6 @@
   let input: string = `define point {
   x number {}
   y number {}
-}
-define origin point {
-  x = 0
-  y = 0
 }`
   let inputError: string = ''
   let output: $Dictionary | undefined
@@ -42,4 +38,10 @@ define origin point {
   />
 
 <h3>dictionary</h3>
-<pre>{JSON.stringify(output, null, 4)}</pre>
+<pre>{JSON.stringify(output, null, 2)}</pre>
+
+<style>
+  pre {
+    white-space: pre-wrap;
+  }
+</style>

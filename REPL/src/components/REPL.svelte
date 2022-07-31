@@ -58,4 +58,7 @@
   tr {
     vertical-align: top;
   }
+  td {
+    max-width: 500px;
+  }
 </style>

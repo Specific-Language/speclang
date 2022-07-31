@@ -47,7 +47,7 @@ export function identify_primitive(context: Context, value: $Primitive): $Dictio
 }
 
 function lookup_name(context: Context, name: string): $Definition[] | undefined {
-  let definitions = context.lookup(name)
+  let definitions = context.lookupName(name)
   if (!definitions) {
     return
   }
@@ -55,7 +55,11 @@ function lookup_name(context: Context, name: string): $Definition[] | undefined 
     if (!d.parent_id) {
       return
     }
-    const parent = context.lookupID(d.parent_id)
+    // todo: this is bad lol
+    const parent_split = d.parent_id.split('-')
+    const parent_name = parent_split[0]
+    const parent_id = parent_split[1]
+    const parent = context.lookupID(parent_name, parent_id)
     definitions = array_safe_join(definitions, parent)
   })
   return definitions

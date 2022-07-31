@@ -7,25 +7,37 @@ import { Context, parse, identify } from 'speclang';
 // `
 
 const testInput = `
-define point {
-  x number {}
-  y number {}
+define data {
+  define type {}
+  define value {}
+  define tony tony chopper {}
 }
-// location point {
-//   x gps-lat {}
-//   y gps-lon {}
+define string data chopper {
+  type = "string"
+}
+// define number data {
+//   type = "number"
 // }
-// origin point {
-//   x = 0
-//   y = 0
+// define boolean data {
+//   type = "boolean"
+// }
+// define object data {
+//   type = "object"
 // }
 `
 
-const context = new Context()
-await parse(context, testInput, {
+const context = new Context({
   verbose: true
 })
-console.log(JSON.stringify(context))
+await parse(context, testInput)
+console.log(JSON.stringify(context, null, 2))
 
 const result = identify(context, 5)
-console.log(JSON.stringify(result, null, 4))
+console.log(JSON.stringify(result, null, 2))
+
+// define point {
+//   define x number {
+//     maximum = 10 
+//   }
+//   define y number {}
+// }
