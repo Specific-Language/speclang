@@ -10,11 +10,14 @@ export class Context {
     this.options = options ?? this.options
   }
   
-  define(name: string, value: $Definition) {
+  define(name: string, value: $Definition, parent?: $Definition) {
     if (this.dictionary[name] === undefined) {
       this.dictionary[name] = []
     }
     this.dictionary[name].push(value)
+    if (parent) {
+      parent.define[name] = value.id
+    }
   }
   lookupName(name: string): $Definition[] {
     return this.dictionary[name]

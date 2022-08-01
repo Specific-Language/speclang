@@ -1,73 +1,62 @@
 import * as speclang from '../../../pkg/speclang'
-import type { $Definition, $Specification, $Value } from './types'
+import type { $Definition, $Object, $Specification, $Value } from './types'
 import { Context } from './context'
+import { Definition, Specification } from './compose'
 
-export async function parse(context: Context, raw_input: string): Promise<void> {
-  const raw_output = await speclang.parse(raw_input)
+export async function parse(context: Context, input: string): Promise<void> {
+  const raw_output = await speclang.parse(input)
   const output: $Specification = JSON.parse(raw_output)
-  const document = compose_definition('$', {
-    time: new Date().toISOString(),
-    raw_input,
-    raw_output,
-    output,
-  })
+  context.options.verbose && console.log('Parsed HCL2 input as JSON')
+  const document = Definition('$')
+  // context.define('$', document)
   specify(context, document, output)
-  context.define('$', document)
+  context.options.verbose && console.log('Successfully understood Specific Language\n')
 }
 
-function specify(context: Context, parent: $Definition, spec: $Specification): void {
-  const { define, ...constrain } = spec
-  if (define) {
-    Object.entries(define).forEach(([name, value]) => {
-      const definition = compose_definition(name, value, parent)
-      parent.define.push(definition.id)
-      context.define(name, definition)
-      specify(context, definition, compose_spec(value))
-    })
-    context.options.verbose && console.log('Definitions complete')
-  }
-  if (constrain) {
-    extend(context, parent, constrain)
-    context.options.verbose && console.log('Extensions complete')
-  }
+function specify(context: Context, parent: $Definition, input: $Specification): void {
+  const { 
+    define: definitions,
+    ...rest
+  } = input
+  definitions && define(context, parent, definitions)
+  rest && extend(context, parent, rest)
 }
 
-function extend(context: Context, parent: $Definition, constrain: $Value) {
-  if (constrain instanceof Array) {
+function define(context: Context, parent: $Definition, input: $Specification) {
+  Object.entries(input).forEach(([name, value]) => {
+    const definition = Definition(name, parent)
+    context.define(name, definition, parent)
+    const spec = Specification(value)
+    specify(context, definition, spec)
+    context.options.verbose && console.log(`Defined "${name}" on ${parent.id}`)
+  })
+}
+
+function extend(context: Context, parent: $Definition, input: $Value): void {
+  if (input instanceof Array) {
     throw Error('unhandled case: extend: array')
   }
-  if (constrain instanceof Object) {
-    Object.entries(constrain).forEach(([name, value]) => {
-      const definition = compose_definition(name, value, parent)
-      parent.extend.push(definition.id)
-      context.define(name, definition)
-      extend(context, definition, value)
+  if (input instanceof Object) {
+    return Object.entries(input).forEach(([name, value]) => {
+      if (value instanceof Array) {
+        throw Error('unhandled case: extend: array')
+      }
+      if (value instanceof Object) {
+        return extend_object(context, parent, name, value)
+      }
+      parent.extend[name] = value
+      context.options.verbose && console.log(`Extended "${name}" on ${parent.id}`)
     })
   }
+  const name = typeof input
+  parent.extend[name] = input
+  context.options.verbose && console.log(`Extended "${name}" on ${parent.id}`)
 }
 
-function compose_definition(name: string, input: $Value, parent?: $Definition): $Definition {
-  const id = `${name}-${String(Number(Math.random().toPrecision(5).substring(2))).padEnd(5, '0')}` // todo : this obv isn't enough
-  const definition: $Definition = {
-    input,
-    define: [],
-    extend: [],
-    id,
-  }
-  if (parent) {
-    definition.parent_id = parent.id
-  }
-  return definition
-}
-
-function compose_spec(value: $Value): $Specification {
-  if (value instanceof Array) {
-    throw Error('unhandled case: compose_spec: Array')
-  }
-  if (value instanceof Object) {
-    return value
-  }
-  return {
-    [typeof value]: value
-  }
+function extend_object(context: Context, parent: $Definition, name: string, value: $Object): void {
+  const definition = Definition(name, parent)
+  context.define(name, definition)
+  parent.extend[name] = definition.id
+  context.options.verbose && console.log(`Extended "${name}" on ${parent.id}`)
+  extend(context, definition, value)
 }

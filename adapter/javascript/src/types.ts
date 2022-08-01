@@ -14,11 +14,11 @@ export type $Object = {
 }
 
 export type $Definition = {
-  input: $Value,
-  define: string[],
-  extend: string[],
+  value?: $Value,
+  define: $Object,
+  extend: $Object,
   id: string,
-  parent_id?: string,
+  parent?: string,
 }
 
 export type $Dictionary = {

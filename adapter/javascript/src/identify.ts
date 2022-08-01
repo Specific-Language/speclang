@@ -52,11 +52,11 @@ function lookup_name(context: Context, name: string): $Definition[] | undefined 
     return
   }
   definitions.forEach((d) => {
-    if (!d.parent_id) {
+    if (!d.parent) {
       return
     }
     // todo: this is bad lol
-    const parent_split = d.parent_id.split('-')
+    const parent_split = d.parent.split('-')
     const parent_name = parent_split[0]
     const parent_id = parent_split[1]
     const parent = context.lookupID(parent_name, parent_id)

@@ -6,7 +6,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "speclang",
-      fileName: (format) => "speclang" + (format === "es" ? ".mjs" : ".js"),
+      fileName: (format) => "index" + (format === "es" ? ".mjs" : ".js"),
     },
     rollupOptions: {
       external: ["typescript"],
