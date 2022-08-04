@@ -13,20 +13,15 @@ export type $Object = {
   [name: string]: $Value,
 }
 
-export type $Definition = {
-  value?: $Value,
-  define: $Object,
-  extend: $Object,
-  id: string,
-  parent?: string,
-}
-
 export type $Dictionary = {
   [name: string]: $Definition[],
 }
 
-export type $Specification = $Object & {
-  define?: $Specification,
+export type $Definition = {
+  id: $ID,
+  parent?: $ID,
+  define?: $Object,
+  extend?: $Object,
 }
 
-// export type $Identifier = `${string}-${string}`
+export type $ID = [name: string, id: string]

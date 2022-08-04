@@ -1,66 +1,83 @@
-import type { $Primitive, $Object, $Value, $Dictionary, $Definition } from './types'
-import type { Context } from './context'
-import { array_safe_join, dictionary_safe_join } from './utility'
+import { Context } from "./context";
+import { $Definition, $Dictionary, $Value } from "./types";
 
-/** identify
- * takes any JSON value
- * returns any matching definitions
- */
-export function identify(context: Context, value: $Value): $Dictionary {
-  if (value instanceof Array) {
-    throw Error('unhandled case: lookup: array')
-  }
-  if (value instanceof Object) {
-    return identify_object(context, value)
-  }
-  return identify_primitive(context, value)
-}
-
-/** identify_object
- * for each key, lookup definitions
- * for each definition, check its parent for a match
- */
-export function identify_object(context: Context, value: $Object): $Dictionary {
-  let result: $Dictionary = {}
-  Object.keys(value).forEach((key) => {
-    const child_definitions = lookup_name(context, key)
-    result[key] = array_safe_join(result[key], child_definitions)
-    const child_lookup = identify(context, value[key])
-    result = dictionary_safe_join(result, child_lookup)
-  })
-  return result
-}
-
-/** identify_primitive
- * non-array, non-object values
- * primitives must have a parent
- */
-export function identify_primitive(context: Context, value: $Primitive): $Dictionary {
+export function identify(context: Context, input: $Value): $Dictionary {
+  console.log(`identifying ${input}`)
   const result: $Dictionary = {}
-  if (typeof value === 'string') {
-    const value_definitions = lookup_name(context, value)
-    result[value] = array_safe_join(result[value], value_definitions)
+  if (input instanceof Array) {
+    throw Error('unhandled: identify: array')
   }
-  const type_definitions = lookup_name(context, typeof value)
-  result[typeof value] = array_safe_join(result[typeof value], type_definitions)
+  if (input instanceof Object) {
+    // Object.entries(input).forEach(([name, value]) => {
+
+    // })
+    throw Error('unhandled: identify: object')
+  }
+  context.lookup(typeof input).forEach((definition) => match(context, result, definition, input))
   return result
 }
 
-function lookup_name(context: Context, name: string): $Definition[] | undefined {
-  let definitions = context.lookupName(name)
-  if (!definitions) {
+export function match(context: Context, result: $Dictionary, definition: $Definition, input: $Value): void {
+  const [name, _] = definition.id
+  if (test(context, definition, input)) {
+    if (!result[name]) {
+      result[name] = []
+    }
+    result[name].push(definition)
+  }
+  if (definition.parent) {
+    const [parent_name, parent_id] = definition.parent
+    const parent_definition = context.get(parent_name, parent_id)
+    match(context, result, parent_definition, input)
+  }
+}
+
+// todo : flesh this out and results array / shim method for basic T/F
+export function test(context: Context, definition: $Definition, input: $Value): boolean {
+  console.log('testing', definition, input)
+  context
+  
+  const result: boolean[] = []
+  const { extend, define } = definition
+  extend && Object.entries(extend).forEach(([name, _]) => testExtend(result, name, input))
+  define && Object.entries(define).forEach(([name, _]) => testDefine(result, name, input))
+  return result.every((value) => value === true)
+}
+
+function testExtend(result: boolean[], name: string, input: $Value) {
+  if (input instanceof Array) {
+    if (name === 'array') {
+      result.push(true)
+    }
+    throw Error('unexpected array')
+  }
+  if (input instanceof Object) {
+    if (name === 'object') {
+      result.push(true)
+    }
+    throw Error('unexpected object')
+  }
+  if (name === 'primitive' 
+    || name === typeof input) {
+    result.push(true)
     return
   }
-  definitions.forEach((d) => {
-    if (!d.parent) {
-      return
+  result.push(false)
+  // todo : verify the child property value?
+}
+
+function testDefine(result: boolean[], name: string, input: $Value) {
+  if (input instanceof Array) {
+    throw Error('unexpected array')
+  }
+  if (input instanceof Object) {
+    if (input[name] === undefined) {
+      result.push(false)
     }
-    // todo: this is bad lol
-    const parent_split = d.parent.split('-')
-    const parent_name = parent_split[0]
-    const parent_id = parent_split[1]
-    const parent = context.lookupID(parent_name, parent_id)
-    definitions = array_safe_join(definitions, parent)
-  })
-  return definitions
+    // todo : verify the child property value?
+    result.push(true)
+  }
+  if (!(input instanceof Object)) {
+    result.push(false)
+  }
 }
