@@ -24,7 +24,7 @@ describe('context', () => {
 function test_single_definition(name: string, value: $Value) {
   const context = new Context()
   const definition = Definition(name)
-  definition.extend[typeof value] = value
+  context.extend(definition, typeof value, value)
   expect(context.dictionary[name]).toBe(undefined)
   context.define(name, definition)
   expect(context.dictionary[name] instanceof Array).toBe(true)
