@@ -1,7 +1,7 @@
-import { Context } from "./context";
+import { get, lookup } from "./dictionary";
 import { $Definition, $Dictionary, $Value } from "./types";
 
-export function identify(context: Context, input: $Value): $Dictionary {
+export function identify(dictionary: $Dictionary, input: $Value): $Dictionary {
   console.log(`identifying ${input}`)
   const result: $Dictionary = {}
   if (input instanceof Array) {
@@ -13,29 +13,29 @@ export function identify(context: Context, input: $Value): $Dictionary {
     // })
     throw Error('unhandled: identify: object')
   }
-  context.lookup(typeof input).forEach((definition) => match(context, result, definition, input))
+  lookup(dictionary, typeof input).forEach((definition) => match(dictionary, result, definition, input))
   return result
 }
 
-export function match(context: Context, result: $Dictionary, definition: $Definition, input: $Value): void {
+export function match(dictionary: $Dictionary, result: $Dictionary, definition: $Definition, input: $Value): void {
   const [name, _] = definition.id
-  if (test(context, definition, input)) {
+  if (test(dictionary, definition, input)) {
     if (!result[name]) {
       result[name] = []
     }
     result[name].push(definition)
   }
-  if (definition.parent) {
-    const [parent_name, parent_id] = definition.parent
-    const parent_definition = context.get(parent_name, parent_id)
-    match(context, result, parent_definition, input)
+  if (definition.origin) {
+    // const [parent_name, parent_id] = definition.parent
+    // const parent_definition = get(dictionary, parent_name, parent_id)
+    match(dictionary, result, definition.origin, input)
   }
 }
 
 // todo : flesh this out and results array / shim method for basic T/F
-export function test(context: Context, definition: $Definition, input: $Value): boolean {
+export function test(dictionary: $Dictionary, definition: $Definition, input: $Value): boolean {
   console.log('testing', definition, input)
-  context
+  dictionary
   
   const result: boolean[] = []
   const { extend, define } = definition

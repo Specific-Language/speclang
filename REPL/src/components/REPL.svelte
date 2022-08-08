@@ -1,11 +1,10 @@
 <script lang="ts">
   import type { Context } from 'speclang'
-  import type { $Definition } from 'speclang/dist/types';
   import Parser from './Parser.svelte'
-  import Tester from './Tester.svelte'
+  // import Tester from './Tester.svelte'
 
   let context: Context
-  let matches: $DefinitionTable
+  // let matches: $Dictionary
 </script>
 
 <table>
@@ -13,7 +12,7 @@
     <td>
       <Parser bind:context />
     </td>
-    {#if context}
+    <!-- {#if context}
       <td>
         <Tester {context} bind:matches />
       </td>
@@ -36,14 +35,14 @@
                 </tr>
                 <tr>
                   <td>Parent ID</td>
-                  <td>{match.parent_id}</td>
+                  <td>{match.parent}</td>
                 </tr>
               </table>
             {/each}
           {/each}
         </td>
       {/if}
-    {/if}
+    {/if} -->
   </tr>
 </table>
 
@@ -57,8 +56,5 @@
   }
   tr {
     vertical-align: top;
-  }
-  td {
-    max-width: 500px;
   }
 </style>

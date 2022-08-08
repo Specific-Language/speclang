@@ -1,22 +1,27 @@
 <script lang="ts">
-  import { Context, parse } from "speclang";
-  import type { $Dictionary } from "speclang/dist/types";
+  import { Context, parse } from 'speclang'
+  import type { $Dictionary } from 'speclang'
   
   export let context: Context
   
   let input: string = `define point {
-  x number {}
-  y number {}
+  define x number {
+    minimum = 0
+  }
+  define y number {
+    minimum = -20
+    maximum = 10
+  }
 }`
   let inputError: string = ''
   let output: $Dictionary | undefined
 
   async function handleParse(input: string) {
     try {
-      context = new Context()
-      await parse(context, input, {
+      context = new Context({
         verbose: true
       })
+      await parse(context, input)
       output = context.dictionary
       inputError = ''
       context = context

@@ -10,18 +10,20 @@ export type $Primitive =
   | null
 
 export type $Object = {
-  [name: string]: $Value,
-}
-
-export type $Dictionary = {
-  [name: string]: $Definition[],
+  [name: string]: $Value
 }
 
 export type $Definition = {
-  id: $ID,
-  parent?: $ID,
-  define?: $Object,
-  extend?: $Object,
+  value?: $Value
+  origin?: $Object
+  define?: $Object
+  extend?: $Object
 }
 
-export type $ID = [name: string, id: string]
+export type $Dictionary = {
+  [name: string]: {
+    [unique: string]: $Definition
+  },
+}
+
+export type $Reference = [name: string, unique: string]
