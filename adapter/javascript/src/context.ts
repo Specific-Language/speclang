@@ -1,6 +1,6 @@
 import * as speclang from '../../../pkg/speclang'
 import type { $Dictionary, $Value } from './types'
-import { create_definition } from './definition'
+import { create_definition } from './dictionary'
 // import { Language } from "./language"
 
 export const DEFAULT_OPTIONS = {

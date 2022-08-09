@@ -1,7 +1,7 @@
 export type $Value =
   | $Primitive
-  | $Object
   | $Value[]
+  | { [name: string]: $Value }
 
 export type $Primitive =
   | string
@@ -9,15 +9,15 @@ export type $Primitive =
   | boolean
   | null
 
-export type $Object = {
-  [name: string]: $Value
-}
+export type $Object = Record<string, $Value>
+
+export type $Reference = [string, string]
 
 export type $Definition = {
   value?: $Value
   origin?: $Object
-  define?: $Object
-  extend?: $Object
+  define?: Record<$Reference[0], $Reference[1]>
+  extend?: Record<$Reference[0], $Reference[1]>
 }
 
 export type $Dictionary = {
@@ -25,5 +25,3 @@ export type $Dictionary = {
     [unique: string]: $Definition
   },
 }
-
-export type $Reference = [name: string, unique: string]
