@@ -1,9 +1,10 @@
 import { specify } from './specify'
 import type { $Definition, $Dictionary, $Reference, $Value } from './types'
 
-export function get(dictionary: $Dictionary, [name, unique]: $Reference): $Definition {
-  const result = dictionary[name] ?? {}
-  return result[unique] ?? {}
+export function get(dictionary: $Dictionary, [name, unique]: $Reference): $Definition | undefined {
+  return dictionary[name] 
+    ? dictionary[name][unique] 
+    : undefined
 }
 
 // todo : handle origin / parent
