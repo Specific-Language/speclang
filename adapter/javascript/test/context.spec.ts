@@ -1,34 +1,24 @@
-import type { $Value } from 'speclang'
-import { Context, Definition } from 'speclang'
+import { Context } from 'speclang'
 
 describe('context', () => {
-  describe('define', () => {
-    test('string', () => {
-      const name = 'foo'
-      const value = 'abc'
-      test_single_definition(name, value)
+  test('constructor', () => {
+    const context = new Context({
+      verbose: true
     })
-    test('boolean', () => {
-      const name = 'foo'
-      const value = true
-      test_single_definition(name, value)
-    })
-    test('number', () => {
-      const name = 'foo'
-      const value = 123
-      test_single_definition(name, value)
-    })
+    testContext(context)
   })
 })
 
-function test_single_definition(name: string, value: $Value) {
-  const context = new Context()
-  const definition = Definition(name)
-  context.extend(definition, typeof value, value)
-  expect(context.dictionary[name]).toBe(undefined)
-  context.define(name, definition)
-  expect(context.dictionary[name] instanceof Array).toBe(true)
-  expect(context.dictionary[name].length).toBe(1)
-  expect(context.dictionary[name][0].extend instanceof Object).toBe(true)
-  expect(context.dictionary[name][0].extend[typeof value]).toBe(value)
+function testContext(context: Context) {
+  expect(context instanceof Context).toBe(true)
+  expect(context.dictionary).toStrictEqual({})
 }
+
+// function testLanguage(language: Context) {
+//   expect(language instanceof Context).toBe(true)
+//   const {
+//     speclang
+//   } = language.dictionary
+//   expect(speclang instanceof Array).toBe(true)
+//   expect(language.dictionary).toStrictEqual({})
+// }
