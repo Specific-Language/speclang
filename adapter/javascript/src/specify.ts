@@ -3,7 +3,7 @@ import { get } from "./dictionary"
 import { $Definition, $Dictionary, $Reference, $Value } from "./types"
 
 export function specify(dictionary: $Dictionary, reference: $Reference, value: $Value) {
-  const definition = get(dictionary, reference)
+  const definition = get(dictionary, ...reference)
   if (!definition) {
     throw Error('expected reference to exist')
   }

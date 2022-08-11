@@ -4,7 +4,10 @@
   
   export let context: Context
   
-  let input: string = `define x number {}`
+  let input: string = `define point {
+  define x number {}
+  define y number {}
+}`
   let inputError: string = ''
   let output: $Dictionary | undefined
 

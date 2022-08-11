@@ -5,7 +5,10 @@
   export let context: Context
   export let result: boolean
 
-  let rawInput = 5
+  let rawInput = {
+    x: 5,
+    y: 3
+  }
   let input: string = JSON.stringify(rawInput, null, 2)
   let inputError: string = ''
 
@@ -26,10 +29,10 @@
 </script>
 
 <h3>test</h3>
-<h4>{inputError}</h4>
 <input type="text" bind:value={testName} placeholder="Test name" />
 
 {#if testName && testName.split('-').length > 0}
+  <h4>{inputError}</h4>
   <br />
   <textarea
     bind:value={input}

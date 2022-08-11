@@ -1,7 +1,7 @@
 import { specify } from './specify'
 import type { $Definition, $Dictionary, $Reference, $Value } from './types'
 
-export function get(dictionary: $Dictionary, [name, unique]: $Reference): $Definition | undefined {
+export function get(dictionary: $Dictionary, name: string, unique: string): $Definition | undefined {
   return dictionary[name] 
     ? dictionary[name][unique] 
     : undefined

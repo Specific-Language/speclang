@@ -2,51 +2,47 @@ import { get } from "./dictionary";
 import { $Definition, $Dictionary, $Reference, $Value } from "./types";
 
 export function test(dictionary: $Dictionary, test_ref: $Reference, value: $Value): boolean {
-  // todo : some kind of fallthrough chain
-  const definition = get(dictionary, test_ref)
+  const [name, unique] = test_ref
+  const definition = get(dictionary, name, unique)
   if (!definition) {
-    return false
+    throw Error('expected to find definition at reference')
   }
-  const [test_name, _] = test_ref
-  if (definition instanceof Object && Object.entries(definition).length === 0) {
+  return test_definition(dictionary, name, definition, value)
+}
+
+function test_definition(dictionary: $Dictionary, test_name: string, definition: $Definition, value: $Value): boolean {
+  const entries = Object.entries(definition)
+  if (entries.length === 0) {
     if (['string', 'number', 'boolean'].includes(test_name)) {
       return test_primitive(test_name, value)
     }
   }
-    return test_spec(dictionary, definition, value)
-}
-
-function test_primitive(name: string, value: $Value): boolean {
-  if (typeof value === name) {
-    return true
-  }
-  return false
-}
-
-function test_spec(dictionary: $Dictionary, definition: $Definition, value: $Value): boolean {
-  const { 
-    extend = {}, 
-    define = {} 
-  } = definition
-  const define_result = Object.entries(define).every((define_ref) => test_define(dictionary, define_ref, value))
-  const extend_result = Object.entries(extend).every((extend_ref) => test_extend(dictionary, extend_ref, value))
+  const extend = definition.extend ?? {}
+  const define = definition.define ?? {}
+  const extend_result = Object.entries(extend).every((reference) => test(dictionary, reference, value))
+  const define_result = Object.entries(define).every((reference) => test_property(dictionary, reference, value))
   return define_result && extend_result
 }
 
-function test_define(dictionary: $Dictionary, reference: $Reference, value: $Value): boolean {
+function test_property(dictionary: $Dictionary, reference: $Reference, value: $Value): boolean {
   const [define_name, _] = reference
   if (value instanceof Object && !(value instanceof Array)) {
-    if (value[define_name] === undefined) {
-      return false
+    if (value[define_name] !== undefined) {
+      return test(dictionary, reference, value[define_name])
     }
-    return test(dictionary, reference, value)
   }
   return false
 }
 
-function test_extend(dictionary: $Dictionary, reference: $Reference, value: $Value): boolean {
-  dictionary
-  reference
-  value
-  throw Error('unimplemented')
+function test_primitive(test_name: string, value: $Value): boolean {
+  if (value instanceof Array) {
+    return test_name === 'array'
+  }
+  if (value instanceof Object) {
+    return test_name === 'object'
+  }
+  if (typeof value === test_name) {
+    return true
+  }
+  return false
 }

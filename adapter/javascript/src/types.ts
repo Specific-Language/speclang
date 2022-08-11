@@ -7,7 +7,6 @@ export type $Primitive =
   | string
   | number
   | boolean
-  | null
 
 export type $Object = Record<string, $Value>
 
