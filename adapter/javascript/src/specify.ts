@@ -1,53 +1,49 @@
-import type { $Specification, $Dictionary, $Reference, $Value, $Map } from "./types"
-import { define_spec, define_reference, extend_reference, set_value } from "./dictionary"
-import { get } from "./dictionary"
+import type { $Dictionary, $Reference, $Value, $Map, $Primitive } from "./types"
+import { define_spec, add_reference, set_value } from "./dictionary"
 
-export function specify(dictionary: $Dictionary, reference: $Reference, value: $Value) {
-  const spec = get(dictionary, ...reference)
-  if (spec === undefined) {
-    throw Error('expected reference to exist')
-  }
+export function specify(dictionary: $Dictionary, spec_ref: $Reference, value: $Value) {
   handle_value(value,
     (/* object */) => {
       const { define, ...extend } = value as $Map
-      define && handle_define(dictionary, spec, define)
-      extend && handle_extend(dictionary, spec, extend)
+      define && handle_define(dictionary, spec_ref, define)
+      extend && handle_extend(dictionary, spec_ref, extend)
     },
     (/* primitive */) => {
-      handle_extend(dictionary, spec, value)
+      handle_extend(dictionary, spec_ref, value)
     }
   )
 }
 
-function handle_define(dictionary: $Dictionary, spec: $Specification, value: $Value) {
+function handle_define(dictionary: $Dictionary, spec_ref: $Reference, value: $Value) {
   handle_value(value,
-    (/* object */) => Object.entries(value).forEach(([name, value]) => {
+    (value) => Object.entries(value).forEach(([name, value]) => {
       const child_ref = define_spec(dictionary, name, value)
-      define_reference(spec, child_ref)
+      add_reference('define', dictionary, spec_ref, child_ref)
+      add_reference('relate', dictionary, child_ref, spec_ref)
     }),
-    (/* primitive */) => {
+    (value) => { /* primitive */
       const child_ref = define_spec(dictionary, typeof value, value)
-      define_reference(spec, child_ref)
+      add_reference('define', dictionary, spec_ref, child_ref)
     }
   )
 }
 
-function handle_extend(dictionary: $Dictionary, spec: $Specification, value: $Value) {
+function handle_extend(dictionary: $Dictionary, spec_ref: $Reference, value: $Value) {
   handle_value(value,
-    (/* object */) => Object.entries(value).forEach(([child_name, child_value]) => {
+    (/* object */) => Object.entries(value as $Map).forEach(([child_name, child_value]) => {
       const child_ref = define_spec(dictionary, child_name, child_value)
-      extend_reference(spec, child_ref)
+      add_reference('extend', dictionary, spec_ref, child_ref)
+      add_reference('relate', dictionary, child_ref, spec_ref)
     }),
     (/* primitive */) => {
-      set_value(spec, value)
+      set_value(dictionary, spec_ref, value)
     }
   )
 }
 
-
-function handle_value(value: $Value, handle_object: () => void, handle_primitive: () => void) {
+function handle_value(value: $Value, handle_object: (value: $Map) => void, handle_primitive: (value: $Primitive) => void) {
   if (value instanceof Object && !(value instanceof Array)) {
-    return handle_object()
+    return handle_object(value)
   }
-  return handle_primitive()
+  return handle_primitive(value)
 }

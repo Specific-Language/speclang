@@ -1,12 +1,13 @@
 export type $Value =
-  | $Primitive
-  | $Value[]
   | $Map
+  | $Primitive
 
 export type $Primitive =
   | string
   | number
   | boolean
+  | undefined
+  | $Value[]
 
 export type $Map = { 
   [name: string]: $Value 
@@ -23,8 +24,8 @@ export type $Dictionary = {
 }
 
 export type $Specification = {
-  value?: $Value
-  origin?: $Map
+  [name: string]: $Value
+  relate?: $ReferenceMap
   define?: $ReferenceMap
   extend?: $ReferenceMap
 }
