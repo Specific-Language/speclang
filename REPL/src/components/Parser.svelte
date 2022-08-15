@@ -1,29 +1,26 @@
 <script lang="ts">
-  import { Context, parse } from 'speclang'
-  import type { $Dictionary } from 'speclang'
+  import type { $Context } from 'speclang'
+  import { parse } from 'speclang'
   
-  export let context: Context
+  export let context: $Context
   
   let input: string = `define point {
   define x number {}
   define y number {}
 }`
   let inputError: string = ''
-  let output: $Dictionary | undefined
 
   async function handleParse(input: string) {
     try {
-      context = new Context({
-        verbose: true
-      })
+      context = {}
       await parse(context, input)
-      output = context.dictionary
       inputError = ''
       context = context
-    } catch (err) {
-      console.log('parse input error', err)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.log('parse error', err.message)
+      }
       inputError = `${err}`
-      output = undefined
     }
   }
   $: handleParse(input)
@@ -37,8 +34,8 @@
   cols=36
   />
 
-<h3>dictionary</h3>
-<pre>{JSON.stringify(output, null, 2)}</pre>
+<h3>context</h3>
+<pre>{JSON.stringify(context, null, 2)}</pre>
 
 <style>
   pre {

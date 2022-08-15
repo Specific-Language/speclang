@@ -1,5 +1,6 @@
 export * from './context'
 export * from './dictionary'
+export * from './functions'
 export * from './identify'
 export * from './specify'
 export * from './types'

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type {  $Reference } from 'speclang'
-  import { Context, test } from "speclang"
+  import type { $Context, $Reference } from 'speclang'
+  import { test } from "speclang"
   
-  export let context: Context
+  export let context: $Context
   export let result: boolean
 
   let rawInput = {
@@ -14,14 +14,16 @@
 
   let testName: string
 
-  async function handleTest(context: Context, testName: string, testInput: string) {
+  async function handleTest(context: $Context, testName: string, testInput: string) {
     try {
       const reference = testName.split('-') as $Reference
       const parsed = JSON.parse(testInput)
-      result = test(context.dictionary, reference, parsed)
+      result = test(context, reference, parsed)
       inputError = ''
-    } catch (err) {
-      console.log('test input error', err)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.log('test error', err.message)
+      }
       inputError = `${err}`
     }
   }

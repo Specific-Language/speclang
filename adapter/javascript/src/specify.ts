@@ -1,49 +1,43 @@
-import type { $Dictionary, $Reference, $Value, $Map, $Primitive } from "./types"
-import { define_spec, add_reference, set_value } from "./dictionary"
+import type { $Reference, $Value } from './types'
+import { $Context, set } from './context'
+import { define, assign, relate, extend } from './dictionary'
+import { handle_value } from './functions'
 
-export function specify(dictionary: $Dictionary, spec_ref: $Reference, value: $Value) {
+export function specify(context: $Context, ref: $Reference, value: $Value) {
   handle_value(value,
-    (/* object */) => {
-      const { define, ...extend } = value as $Map
-      define && handle_define(dictionary, spec_ref, define)
-      extend && handle_extend(dictionary, spec_ref, extend)
+    (value) => {
+      const { define, ...extend } = value
+      define && handle_define(context, ref, define)
+      extend && handle_extend(context, ref, extend)
     },
-    (/* primitive */) => {
-      handle_extend(dictionary, spec_ref, value)
+    (value) => {
+      handle_extend(context, ref, value)
     }
   )
 }
 
-function handle_define(dictionary: $Dictionary, spec_ref: $Reference, value: $Value) {
+function handle_define(context: $Context, ref: $Reference, value: $Value) {
   handle_value(value,
-    (value) => Object.entries(value).forEach(([name, value]) => {
-      const child_ref = define_spec(dictionary, name, value)
-      add_reference('define', dictionary, spec_ref, child_ref)
-      add_reference('relate', dictionary, child_ref, spec_ref)
+    (value) => Object.entries(value).forEach(([child_name, child_value]) => {
+      const child_ref = set(context, child_name, child_value)
+      define(context, ref, child_ref)
+      relate(context, child_ref, ref)
     }),
-    (value) => { /* primitive */
-      const child_ref = define_spec(dictionary, typeof value, value)
-      add_reference('define', dictionary, spec_ref, child_ref)
+    (value) => {
+      const child_ref = set(context, typeof value, value)
+      define(context, ref, child_ref)
+      relate(context, child_ref, ref)
     }
   )
 }
 
-function handle_extend(dictionary: $Dictionary, spec_ref: $Reference, value: $Value) {
+function handle_extend(context: $Context, ref: $Reference, value: $Value) {
   handle_value(value,
-    (/* object */) => Object.entries(value as $Map).forEach(([child_name, child_value]) => {
-      const child_ref = define_spec(dictionary, child_name, child_value)
-      add_reference('extend', dictionary, spec_ref, child_ref)
-      add_reference('relate', dictionary, child_ref, spec_ref)
+    (value) => Object.entries(value).forEach(([child_name, child_value]) => {
+      const child_ref = set(context, child_name, child_value)
+      extend(context, ref, child_ref)
+      relate(context, child_ref, ref)
     }),
-    (/* primitive */) => {
-      set_value(dictionary, spec_ref, value)
-    }
+    (value) => assign(context, ref, value)
   )
-}
-
-function handle_value(value: $Value, handle_object: (value: $Map) => void, handle_primitive: (value: $Primitive) => void) {
-  if (value instanceof Object && !(value instanceof Array)) {
-    return handle_object(value)
-  }
-  return handle_primitive(value)
 }

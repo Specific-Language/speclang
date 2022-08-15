@@ -1,25 +1,36 @@
-import type { $Dictionary, $Value } from './types'
+import type { $Reference, $ReferenceMap, $Value } from './types'
+import type { $Dictionary } from './dictionary'
 import * as speclang from '../../../pkg/speclang'
-import { define_spec } from './dictionary'
+import { specify } from './specify'
 
 export const DEFAULT_OPTIONS = {
-  verbose: false,
-}
-
-export class Context {
-  options: typeof DEFAULT_OPTIONS
-  dictionary: $Dictionary
-
-  constructor(options: typeof DEFAULT_OPTIONS = DEFAULT_OPTIONS) {
-    this.options = options
-    this.dictionary = {}
+  logging: {
+    verbose: false
   }
 }
 
-export async function parse(context: Context, input: string): Promise<void> {
+export type $Context = {
+  [name: string]: $Dictionary<$Value>
+} & {
+  option?: typeof DEFAULT_OPTIONS
+  define?: $Dictionary<$ReferenceMap>
+  extend?: $Dictionary<$ReferenceMap>
+  relate?: $Dictionary<$ReferenceMap> // needs refactor
+  assign?: $Dictionary<$Value>
+}
+
+export async function parse(context: $Context, input: string): Promise<$Reference> {
   const raw_output = await speclang.parse(input)
   const output: $Value = JSON.parse(raw_output)
-  context.options.verbose && console.log('Parsed HCL2 input as JSON')
-  define_spec(context.dictionary, '$-parse', output)
-  context.options.verbose && console.log('Successfully understood input as Specific Language')
+  return set(context, '$-parse', output)
+}
+
+export function set(context: $Context, name: string, value: $Value): $Reference {
+  const unique = String(Number(Math.random().toPrecision(5).substring(2))).padEnd(5, '0')
+  context.define ??= {}
+  context.define[name] ??= {}
+  context.define[name][unique] ??= {}
+  const reference: $Reference = [name, unique]
+  specify(context, reference, value)
+  return reference
 }
