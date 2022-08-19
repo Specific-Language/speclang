@@ -7,7 +7,12 @@
   let input: string = `define point {
   define x number {}
   define y number {}
-}`
+}
+
+/*define origin point {
+  x = 0
+  y = 0
+}*/`
   let inputError: string = ''
 
   async function handleParse(input: string) {
@@ -34,11 +39,22 @@
   cols=36
   />
 
-<h3>context</h3>
-<pre>{JSON.stringify(context, null, 2)}</pre>
+<table>
+  <tr>
+    {#each Object.keys(context).sort() as dictionary}
+      <td>
+        <h3>{dictionary}</h3>
+        <pre>{JSON.stringify(context[dictionary], null, 2)}</pre>
+      </td>
+    {/each}
+  </tr>
+</table>
 
 <style>
   pre {
     white-space: pre-wrap;
+  }
+  tr {
+    vertical-align: top;
   }
 </style>

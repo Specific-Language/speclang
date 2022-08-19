@@ -1,61 +1,72 @@
-import type { $Reference, $ReferenceMap, $Value } from './types'
-import type { $Context } from './context'
+import type { $Context, $Reference, $Value } from './types'
+import { specify } from './specify'
 
-export type $Dictionary<T extends $Value> = {
-  [name: string]: {
-    [unique: string]: T
-  },
+export function create_reference(name: string): $Reference {
+  const unique = String(Number(Math.random().toPrecision(5).substring(2))).padEnd(5, '0')
+  return [name, unique]
 }
 
-export function slice(context: $Context, reference: $Reference) {
-  const define = get_value(context, 'define', reference)
-  const extend = get_value(context, 'extend', reference)
-  const relate = get_value(context, 'relate', reference)
-  const assign = get_value(context, 'assign', reference)
-  return {
-    define,
-    extend,
-    relate,
-    assign,
-  }
+export function create_definition(context: $Context, target: $Reference, name: string, value: $Value) {
+  const child_ref = create_reference(name)
+  add_define(context, child_ref, value, target)
 }
 
-export function define(context: $Context, target: $Reference, value: $Reference) {
+export function create_extend(context: $Context, target: $Reference, name: string, value: $Value) {
+  const child_ref = create_reference(name)
+  add_extend(context, child_ref, value, target)
+}
+
+export function add_define(context: $Context, target: $Reference, value: $Value, parent?: $Reference) {
+  const [name, unique] = target
   context.define ??= {}
-  return set_reference(context.define, target, value)
+  if (parent) {
+    const [parent_name, parent_unique] = parent
+    context.define[parent_name] ??= {}
+    context.define[parent_name][parent_unique] ??= {}
+    context.define[parent_name][parent_unique][name] = unique
+    add_parent(context, target, parent)
+  }
+  context.define[name] ??= {}
+  context.define[name][unique] ??= {}
+  specify(context, target, value)
 }
 
-export function extend(context: $Context, target: $Reference, value: $Reference) {
+export function add_extend(context: $Context, target: $Reference, value: $Value, parent: $Reference) {
+  const [target_name, target_unique] = target
   context.extend ??= {}
-  return set_reference(context.extend, target, value)
+  const [parent_name, parent_unique] = parent
+  context.extend[parent_name] ??= {}
+  context.extend[parent_name][parent_unique] ??= {}
+  context.extend[parent_name][parent_unique][target_name] ??= []
+  context.extend[parent_name][parent_unique][target_name].push(target_unique)
+  add_parent(context, target, parent)
+  context.extend[target_name] ??= {}
+  context.extend[target_name][target_unique] ??= {}
+  specify(context, target, value)
 }
 
-export function relate(context: $Context, target: $Reference, value: $Reference) {
-  context.relate ??= {}
-  return set_reference(context.relate, target, value)
-}
-
-export function assign(context: $Context, target: $Reference, value: $Value) {
-  context.assign ??= {}
-  return set_value(context.assign, target, value)
-}
-
-function set_reference(dictionary: $Dictionary<$ReferenceMap>, target: $Reference, value: $Reference) {
+export function add_parent(context: $Context, target: $Reference, value: $Reference) {
   const [name, unique] = value
   const [target_name, target_unique] = target
-  dictionary[target_name] ??= {}
-  dictionary[target_name][target_unique] ??= {}
-  dictionary[target_name][target_unique][name] = unique
+  context.parent ??= {}
+  context.parent[target_name] ??= {}
+  context.parent[target_name][target_unique] ??= {}
+  context.parent[target_name][target_unique][name] = unique
 }
 
-function set_value(dictionary: $Dictionary<$Value>, [target_name, target_unique]: $Reference, value: $Value) {
-  dictionary[target_name] ??= {}
-  dictionary[target_name][target_unique] = value
+export function assign(context: $Context, [name, unique]: $Reference, value: $Value) {
+  context.assign ??= {}
+  context.assign[name] ??= {}
+  context.assign[name][unique] = value
 }
 
-function get_value(context: $Context, partition: string, [name, unique]: $Reference): $Value | undefined {
-  if (context[partition] && context[partition][name]) {
-    return context[partition][name][unique] 
-  }
-  return undefined
+export function slice(context: $Context, [name, unique]: $Reference): $Context {
+  return Object.keys(context).reduce<$Context>((result, dictionary) => {
+    if (context[dictionary] && context[dictionary][name]) {
+      result[dictionary] ??= {}
+      result[dictionary][name] ??= {}
+      result[dictionary][name][unique] = context[dictionary][name][unique] 
+    }
+    return result
+  }, {})
 }
