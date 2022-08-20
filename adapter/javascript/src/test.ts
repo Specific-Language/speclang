@@ -1,6 +1,6 @@
-import { PRIMITIVES } from './$constants';
+import { PRIMITIVES } from './constants';
 import { get_slice } from './dictionary';
-import type { $Context, $Dictionary, $Reference, $ReferenceList, $ReferenceMap, $Value } from './$types';
+import type { $Context, $Dictionary, $Reference, $ReferenceList, $ReferenceMap, $Value } from './types';
 
 export function test(context: $Context, ref: $Reference, value: $Value): boolean {
   context.option?.verbose && console.log('test', ref, value)
@@ -12,22 +12,22 @@ export function test(context: $Context, ref: $Reference, value: $Value): boolean
   console.log(slice)
   const define_result = define && test_define(context, define, ref, value)
   if (define_result === false) {
-    context.option?.verbose && console.log(' * failed test_define')
+    context.option?.verbose && console.log(' * failed test_define', ref, value)
     return false
   }
   const extend_result = extend && test_extend(context, extend, ref, value)
   if (extend_result === false) {
-    context.option?.verbose && console.log(' * failed test_extend')
+    context.option?.verbose && console.log(' * failed test_extend', ref, value)
     return false
   }
   const assign_result = assign && test_assign(context, assign, ref, value)
   if (assign_result === false) {
-    context.option?.verbose && console.log(' * failed test_assign')
+    context.option?.verbose && console.log(' * failed test_assign', ref, value)
     return false
   }
   const values_result = values && test_values(context, values, ref, value)
   if (values_result === false) {
-    context.option?.verbose && console.log(' * failed test_values')
+    context.option?.verbose && console.log(' * failed test_values', ref, value)
     return false
   }
   return test_primitive(context, ref, value)

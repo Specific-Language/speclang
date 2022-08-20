@@ -1,4 +1,4 @@
-import type { $Reference, $Map } from "./$types"
+import type { $Reference, $Map } from "./types"
 
 export function generate_reference(name: string): $Reference {
   const unique = String(Number(Math.random().toPrecision(5).substring(2))).padEnd(5, '0')
