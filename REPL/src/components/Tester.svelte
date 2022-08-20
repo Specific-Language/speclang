@@ -3,7 +3,7 @@
   import { test } from "speclang"
   
   export let context: $Context
-  export let result: boolean
+  export let result: boolean = false
 
   let rawInput = {
     x: 5,
@@ -16,8 +16,11 @@
 
   async function handleTest(context: $Context, testName: string, testInput: string) {
     try {
-      const reference = testName.split('-') as $Reference
-      if (reference[0] && reference[1] && reference[1].length === 5) {
+      const split = testName.split('-')
+      const unique = split.pop()
+      const name = split.join('-')
+      if (name && unique && unique.length === 5) {
+        const reference: $Reference = [name, unique]
         const parsed = JSON.parse(testInput)
         result = test(context, reference, parsed)
         inputError = ''

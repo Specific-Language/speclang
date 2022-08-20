@@ -1,13 +1,15 @@
-import type { $Context, $Dictionary, $Reference, $ReferenceList, $ReferenceMap, $Value } from './types';
+import { PRIMITIVES } from './$constants';
 import { get_slice } from './dictionary';
+import type { $Context, $Dictionary, $Reference, $ReferenceList, $ReferenceMap, $Value } from './$types';
 
 export function test(context: $Context, ref: $Reference, value: $Value): boolean {
   context.option?.verbose && console.log('test', ref, value)
-  const slice = get_slice(context, ...ref)
+  const slice = get_slice(context, ref)
   if (Object.entries(slice).length === 0) {
     throw Error(`No context exists for reference [${ref.join('-')}]`)
   }
   const { define, extend, assign, values } = slice
+  console.log(slice)
   const define_result = define && test_define(context, define, ref, value)
   if (define_result === false) {
     context.option?.verbose && console.log(' * failed test_define')
@@ -32,16 +34,8 @@ export function test(context: $Context, ref: $Reference, value: $Value): boolean
 }
 
 function test_define(context: $Context, define: $Dictionary<$ReferenceMap>, [name, unique]: $Reference, value: $Value): boolean {
-  context.option?.verbose && console.log('| test_define', name, unique, value)
-  return Object.entries(define[name][unique]).every((child_ref) => {
-    const [child_name, _] = child_ref
-    if (value instanceof Object && !(value instanceof Array)) {
-      if (value[child_name] !== undefined) {
-        return test(context, child_ref, value[child_name])
-      }
-    }
-    return false
-  })
+  context.option?.verbose && console.log('| test_define', define, name, unique, value)
+  return Object.entries(define[name][unique]).every((child_ref) => test_property(context, child_ref, value))
 }
 
 function test_extend(context: $Context, extend: $Dictionary<$ReferenceList>, [name, unique]: $Reference, value: $Value): boolean {
@@ -56,32 +50,28 @@ function test_extend(context: $Context, extend: $Dictionary<$ReferenceList>, [na
 
 function test_assign(context: $Context, assign: $Dictionary<$ReferenceMap>, [name, unique]: $Reference, value: $Value): boolean {
   context.option?.verbose && console.log('| test_assign', name, unique, value)
-  return Object.entries(assign[name][unique]).every((child_ref) => {
-    console.log(assign, name, unique, child_ref, value)
-    const [child_name, _] = child_ref
-    if (value instanceof Object && !(value instanceof Array)) {
-      if (value[child_name] !== undefined) {
-        return test(context, child_ref, value[child_name])
-      }
-    }
-    return false
-  })
+  return Object.entries(assign[name][unique]).every((child_ref) => test_property(context, child_ref, value))
 }
 
 function test_values(context: $Context, values: $Dictionary<$Value>, [name, unique]: $Reference, value: $Value): boolean {
   context.option?.verbose && console.log('| test_values', name, unique, value)
-  return value === values[name][unique]
+  return JSON.stringify(value) === JSON.stringify(values[name][unique])
 }
 
 function test_primitive(context: $Context, [name, _]: $Reference, value: $Value): boolean {
   context.option?.verbose && console.log('| test_primitive', name, value)
-  const PRIMITIVES = [
-    'string', 
-    'number', 
-    'boolean',
-  ]
   if (PRIMITIVES.includes(name)) {
     return typeof value === name
   }
   return true
+}
+
+function test_property(context: $Context, reference: $Reference, value: $Value) {
+  const [name, _] = reference
+  if (value instanceof Object && !(value instanceof Array)) {
+    if (value[name] !== undefined) {
+      return test(context, reference, value[name])
+    }
+  }
+  return false
 }
