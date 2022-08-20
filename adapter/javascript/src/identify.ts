@@ -1,53 +1,56 @@
-import type { $Context, $Reference, $Value } from './types';
+import type { $Context, $Dictionary, $Reference, $ReferenceList, $ReferenceMap, $Value } from './types';
 import { slice } from './dictionary';
 
-export const PRIMITIVES = [
-  'string', 
-  'number', 
-  'boolean',
-]
-
 export function test(context: $Context, ref: $Reference, value: $Value): boolean {
-  const [name, unique] = ref
   const { define, extend, assign } = slice(context, ref)
-  if (assign) {
-    if (value !== assign[name][unique]) {
-      return false
-    }
+  const assign_result = assign && test_assign(assign, ref, value)
+  if (assign_result === false) {
+    return false
   }
-  if (define) {
-    const result = Object.entries(define[name][unique]).every((child_ref) => {
-      return test_property(context, child_ref, value)
-    })
-    if (result === false) {
-      return false
-    }
+  const define_result = define && test_define(context, define, ref, value)
+  if (define_result === false) {
+    return false
   }
-  if (extend) {
-    const result = Object.entries(extend[name][unique]).every(([child_name, child_refs]) => {
-      return child_refs.every((child_unique) => {
-        const child_ref: $Reference = [child_name, child_unique]
-        return test(context, child_ref, value)
-      })
-    })
-    if (result === false) {
-      return false
-    }
+  const extend_result = extend && test_extend(context, extend, ref, value)
+  if (extend_result === false) {
+    return false
   }
-  if (PRIMITIVES.includes(name)) {
-    if (typeof value !== name) {
-      return false
-    }
-  }
-  return true
+  return test_primitive(ref, value)
 }
 
-function test_property(context: $Context, child_ref: $Reference, value: $Value): boolean {
-  const name = child_ref[0]
-  if (value instanceof Object && !(value instanceof Array)) {
-    if (value[name] !== undefined) {
-      return test(context, child_ref, value[name])
+function test_assign(assign: $Dictionary<$Value>, [name, unique]: $Reference, value: $Value): boolean {
+  return value !== assign[name][unique]
+}
+
+function test_define(context: $Context, define: $Dictionary<$ReferenceMap>, [name, unique]: $Reference, value: $Value): boolean {
+  return Object.entries(define[name][unique]).every((child_ref) => {
+    const [child_name, _] = child_ref
+    if (value instanceof Object && !(value instanceof Array)) {
+      if (value[child_name] !== undefined) {
+        return test(context, child_ref, value[child_name])
+      }
     }
+    return false
+  })
+}
+
+function test_extend(context: $Context, extend: $Dictionary<$ReferenceList>, [name, unique]: $Reference, value: $Value): boolean {
+  return Object.entries(extend[name][unique]).every(([child_name, child_refs]) => {
+    return child_refs.every((child_unique) => {
+      const child_ref: $Reference = [child_name, child_unique]
+      return test(context, child_ref, value)
+    })
+  })
+}
+
+function test_primitive([name, _]: $Reference, value: $Value): boolean {
+  const PRIMITIVES = [
+    'string', 
+    'number', 
+    'boolean',
+  ]
+  if (PRIMITIVES.includes(name)) {
+    return typeof value === name
   }
-  return false
+  return true
 }
