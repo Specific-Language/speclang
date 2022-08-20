@@ -7,7 +7,7 @@ export function test(context: $Context, ref: $Reference, value: $Value): boolean
   if (Object.entries(slice).length === 0) {
     throw Error(`No context exists for reference [${ref.join('-')}]`)
   }
-  const { define, extend, values } = slice
+  const { define, extend, assign, values } = slice
   const define_result = define && test_define(context, define, ref, value)
   if (define_result === false) {
     context.option?.verbose && console.log(' * failed test_define')
@@ -16,6 +16,11 @@ export function test(context: $Context, ref: $Reference, value: $Value): boolean
   const extend_result = extend && test_extend(context, extend, ref, value)
   if (extend_result === false) {
     context.option?.verbose && console.log(' * failed test_extend')
+    return false
+  }
+  const assign_result = assign && test_assign(context, assign, ref, value)
+  if (assign_result === false) {
+    context.option?.verbose && console.log(' * failed test_assign')
     return false
   }
   const values_result = values && test_values(context, values, ref, value)
@@ -46,6 +51,20 @@ function test_extend(context: $Context, extend: $Dictionary<$ReferenceList>, [na
       const child_ref: $Reference = [child_name, child_unique]
       return test(context, child_ref, value)
     })
+  })
+}
+
+function test_assign(context: $Context, assign: $Dictionary<$ReferenceMap>, [name, unique]: $Reference, value: $Value): boolean {
+  context.option?.verbose && console.log('| test_assign', name, unique, value)
+  return Object.entries(assign[name][unique]).every((child_ref) => {
+    console.log(assign, name, unique, child_ref, value)
+    const [child_name, _] = child_ref
+    if (value instanceof Object && !(value instanceof Array)) {
+      if (value[child_name] !== undefined) {
+        return test(context, child_ref, value[child_name])
+      }
+    }
+    return false
   })
 }
 
