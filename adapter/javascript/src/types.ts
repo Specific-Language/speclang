@@ -26,6 +26,7 @@ export type $ReferenceList = Record<$Reference[0], $Reference[1][]>
 export type $Context = {
   [name: string]: $Dictionary<$Value>
 } & {
+  option?: $Dictionary<$Value>
   define?: $Dictionary<$ReferenceMap>
   extend?: $Dictionary<$ReferenceList>
   parent?: $Dictionary<$ReferenceMap>

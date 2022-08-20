@@ -1,9 +1,15 @@
 <script lang="ts">
-  import type { $Context } from 'speclang'
+  import type { $Context, $Map} from 'speclang'
   import { parse } from 'speclang'
   
   export let context: $Context
   
+  const display: $Map = {
+    define: true,
+    extend: true,
+    values: true,
+  }
+
   let input: string = `define point {
   define x number {}
   define y number {}
@@ -17,7 +23,11 @@ define origin point {
 
   async function handleParse(input: string) {
     try {
-      context = {}
+      context = {
+        option: {
+          verbose: true
+        }
+      }
       await parse(context, input)
       inputError = ''
       context = context
@@ -43,8 +53,13 @@ define origin point {
   <tr>
     {#each Object.keys(context).sort() as dictionary}
       <td>
-        <h3>{dictionary}</h3>
-        <pre>{JSON.stringify(context[dictionary], null, 2)}</pre>
+        <h3>
+          {dictionary}
+          <input type="checkbox" bind:checked={display[dictionary]}>
+        </h3>
+        {#if display[dictionary]}
+          <pre>{JSON.stringify(context[dictionary], null, 2)}</pre>
+        {/if}
       </td>
     {/each}
   </tr>

@@ -1,15 +1,15 @@
 import { specify } from './specify'
-import { test } from './test'
 import type { $Context, $Reference, $Value } from './types'
 
 export function create_reference(context: $Context, name: string, value: $Value): $Reference {
-  const { define } = get_slice(context, name)
-  if (define !== undefined) {
-    const match = Object.keys(define[name]).find((unique) => test(context, [name, unique], value))
-    if (match) {
-      return [name, match]
-    }
-  }
+  // const { define } = get_slice(context, name)
+  // if (define !== undefined) {
+  //   // todo : handle multiple matches
+  //   const match = Object.keys(define[name]).find((unique) => test(context, [name, unique], value))
+  //   if (match) {
+  //     // return [name, match]
+  //   }
+  // }
   const unique = String(Number(Math.random().toPrecision(5).substring(2))).padEnd(5, '0')
   const reference: $Reference = [name, unique]
   specify(context, reference, value)

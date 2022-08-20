@@ -6,16 +6,16 @@ export function specify(context: $Context, ref: $Reference, spec: $Value) {
     throw Error('specify: handle array unimplemented')
   } else if (spec instanceof Object) {
     const { define, ...extend } = spec
-    define && handle_define(context, ref, define)
-    extend && handle_extend(context, ref, extend)
+    define && specify_define(context, ref, define)
+    extend && specify_extend(context, ref, extend)
   } else {
-    handle_extend(context, ref, spec)
+    specify_extend(context, ref, spec)
   }
 }
 
-function handle_define(context: $Context, ref: $Reference, define: $Value) {
+function specify_define(context: $Context, ref: $Reference, define: $Value) {
   if (define instanceof Array) {
-    define.forEach((value) => handle_define(context, ref, value))
+    define.forEach((value) => specify_define(context, ref, value))
   } else if (define instanceof Object) {
     ordered_entries(define).forEach(([name, value]) => {
       if (value instanceof Array) {
@@ -33,7 +33,7 @@ function handle_define(context: $Context, ref: $Reference, define: $Value) {
   }
 }
 
-function handle_extend(context: $Context, ref: $Reference, extend: $Value) {
+function specify_extend(context: $Context, ref: $Reference, extend: $Value) {
   if (extend instanceof Object && !(extend instanceof Array)) {
     ordered_entries(extend).forEach(([name, value]) => {
       if (value instanceof Array) {
