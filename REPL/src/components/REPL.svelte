@@ -27,7 +27,7 @@
 </table>
 
 {#if context}
-  <table>
+  <table class="output">
     <tr>
       {#each Object.keys(context)
         .sort((a, b) => {
@@ -51,6 +51,10 @@
   pre {
     white-space: pre-wrap;
   }
+  table {
+    margin: 1.5em;
+    border-spacing: 1.5em;
+  }
   table, tr, td {
     border-color: black;
   }
@@ -58,7 +62,7 @@
     border-width: 2px;
     border-style: solid;
   }
-  tr {
+  tr, td {
     vertical-align: top;
   }
 </style>

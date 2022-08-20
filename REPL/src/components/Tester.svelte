@@ -25,7 +25,7 @@
         result = test(context, reference, parsed)
         inputError = ''
       } else {
-        inputError = 'Test reference must match pattern "<name>-<unique>"'
+        inputError = 'Test reference must match pattern <name>-<unique>'
       }
     } catch (err: unknown) {
       console.log('An error occurred during the test', err)
