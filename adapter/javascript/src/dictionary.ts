@@ -71,8 +71,17 @@ export function apply_parent(context: $Context, target: $Reference, value: $Refe
   context.parent[target_name][target_unique][name] = unique
 }
 
-export function apply_value(context: $Context, [name, unique]: $Reference, value: $Value) {
+export function apply_value(context: $Context, target: $Reference, value: $Value, parent?: $Reference) {
+  const [name, unique] = target
   context.values ??= {}
   context.values[name] ??= {}
   context.values[name][unique] = value
+  if (parent) {
+    const [parent_name, parent_unique] = parent
+    context.assign ??= {}
+    context.assign[parent_name] ??= {}
+    context.assign[parent_name][parent_unique] ??= {}
+    context.assign[parent_name][parent_unique][name] = unique
+    apply_parent(context, target, parent)
+  }
 }

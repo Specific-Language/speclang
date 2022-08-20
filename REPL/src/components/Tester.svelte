@@ -33,18 +33,21 @@
 </script>
 
 <h3>test</h3>
-<input type="text" bind:value={testName} placeholder="Test name" />
+<input type="text" bind:value={testName} placeholder="Test reference" />
+<br />
 
 {#if testName && testName.split('-').length > 0}
-  <h4>{inputError}</h4>
-  <br />
+  {#if inputError}
+    <h4>{inputError}</h4>
+  {/if}
   <textarea
     bind:value={input}
     rows=12
     cols=36
     />
+  <br />
   {#if !inputError}
-    <h3>matches</h3>
-    <pre>{JSON.stringify(result, null, 4)}</pre>
+    <h4>Test result:</h4>
+    <pre>{result}</pre>
   {/if}
 {/if}

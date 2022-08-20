@@ -1,53 +1,36 @@
 import type { $Context, $Map, $Reference, $Value } from './types'
 import { apply_define, apply_extend, apply_value, create_reference } from './dictionary'
 
-export function specify(context: $Context, ref: $Reference, spec: $Value) {
-  if (spec instanceof Array) {
-    throw Error('specify: handle array unimplemented')
-  } else if (spec instanceof Object) {
-    const { define, ...extend } = spec
-    define && specify_define(context, ref, define)
-    extend && specify_extend(context, ref, extend)
+export function specify(context: $Context, ref: $Reference, value: $Value) {
+  if (value instanceof Object && !(value instanceof Array)) {
+    const { define, extend, ...values } = value
+    console.log(ref, 'values', values)
+    define && specify_reserved(context, apply_define, ref, define)
+    extend && specify_reserved(context, apply_extend, ref, extend)
+    values && ordered_entries(values).forEach(([name, value]) => {
+      const child_ref = create_reference(context, name, value)
+      apply_value(context, child_ref, value, ref)
+    })
   } else {
-    specify_extend(context, ref, spec)
+    apply_value(context, ref, value)
   }
 }
 
-function specify_define(context: $Context, ref: $Reference, define: $Value) {
-  if (define instanceof Array) {
-    define.forEach((value) => specify_define(context, ref, value))
-  } else if (define instanceof Object) {
-    ordered_entries(define).forEach(([name, value]) => {
-      if (value instanceof Array) {
-        value.forEach((child_value) => {
-          const child_ref = create_reference(context, name, child_value)
-          apply_define(context, child_ref, ref)
+function specify_reserved(context: $Context, apply_fn: typeof apply_define | typeof apply_extend, ref: $Reference, value: $Value) {
+  if (value instanceof Object && !(value instanceof Array)) {
+    ordered_entries(value).forEach(([child_name, child_value]) => {
+      if (child_value instanceof Array) {
+        child_value.forEach((child_value_entry) => {
+          const child_ref = create_reference(context, child_name, child_value_entry)
+          apply_fn(context, child_ref, ref)
         })
       } else {
-        const child_ref = create_reference(context, name, value)
-        apply_define(context, child_ref, ref)
+        const child_ref = create_reference(context, child_name, child_value)
+        apply_fn(context, child_ref, ref)
       }
     })
   } else {
-    throw Error('The "define" keyword is reserved and cannot be redefined')
-  }
-}
-
-function specify_extend(context: $Context, ref: $Reference, extend: $Value) {
-  if (extend instanceof Object && !(extend instanceof Array)) {
-    ordered_entries(extend).forEach(([name, value]) => {
-      if (value instanceof Array) {
-        value.forEach((entry) => {
-          const child_ref = create_reference(context, name, entry)
-          apply_extend(context, child_ref, ref)
-        })
-      } else {
-        const child_ref = create_reference(context, name, value)
-        apply_extend(context, child_ref, ref)
-      }
-    })
-  } else {
-    apply_value(context, ref, extend)
+    throw Error('The "define" and "extend" keywords are reserved and cannot be redefined')
   }
 }
 

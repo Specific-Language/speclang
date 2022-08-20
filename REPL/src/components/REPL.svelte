@@ -1,10 +1,16 @@
 <script lang="ts">
-  import type { Context, $Dictionary } from 'speclang'
+  import type { $Context, $Map } from 'speclang'
   import Parser from './Parser.svelte'
   import Tester from './Tester.svelte';
 
-  let context: Context
-  let matches: $Dictionary
+  let context: $Context
+
+  const display: $Map = {
+    assign: true,
+    define: true,
+    extend: true,
+    values: true,
+  }
 </script>
 
 <table>
@@ -14,39 +20,37 @@
     </td>
      {#if context}
       <td>
-        <Tester {context} bind:matches />
+        <Tester {context} />
       </td>
-    <!--  {#if matches}
-        <td>
-          {#each Object.keys(matches) as key}
-            {#each matches[key] as match}
-              <table>
-                <tr>
-                  <td><pre>{JSON.stringify(match.value, null, 2)}</td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>Name</td>
-                  <td><strong>{key}</strong></td>
-                </tr>
-                <tr>
-                  <td>ID</td>
-                  <td>{match.id}</td>
-                </tr>
-                <tr>
-                  <td>Parent ID</td>
-                  <td>{match.parent}</td>
-                </tr>
-              </table>
-            {/each}
-          {/each}
-        </td>
-      {/if} -->
     {/if}
   </tr>
 </table>
 
+{#if context}
+  <table>
+    <tr>
+      {#each Object.keys(context)
+        .sort((a, b) => {
+          return JSON.stringify(context[b]).length - JSON.stringify(context[a]).length
+        }) as dictionary}
+        <td>
+          <h3>
+            {dictionary}
+            <input type="checkbox" bind:checked={display[dictionary]}>
+          </h3>
+          {#if display[dictionary]}
+            <pre>{JSON.stringify(context[dictionary], null, 2)}</pre>
+          {/if}
+        </td>
+      {/each}
+    </tr>
+  </table>
+{/if}
+
 <style>
+  pre {
+    white-space: pre-wrap;
+  }
   table, tr, td {
     border-color: black;
   }
