@@ -35,8 +35,10 @@
         }) as dictionary}
         <td>
           <h3>
-            {dictionary}
-            <input type="checkbox" bind:checked={display[dictionary]}>
+            <label>
+              {dictionary}
+              <input type="checkbox" bind:checked={display[dictionary]}>
+            </label>
           </h3>
           {#if display[dictionary]}
             <pre>{JSON.stringify(context[dictionary], null, 2)}</pre>
