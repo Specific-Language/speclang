@@ -29,5 +29,5 @@ export type $Context = {
   define?: $Dictionary<$ReferenceMap>
   extend?: $Dictionary<$ReferenceList>
   parent?: $Dictionary<$ReferenceMap>
-  assign?: $Dictionary<$Value>
+  values?: $Dictionary<$Value>
 }

@@ -9,10 +9,10 @@
   define y number {}
 }
 
-/*define origin point {
+define origin point {
   x = 0
   y = 0
-}*/`
+}`
   let inputError: string = ''
 
   async function handleParse(input: string) {

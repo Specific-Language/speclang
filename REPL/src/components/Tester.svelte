@@ -17,17 +17,19 @@
   async function handleTest(context: $Context, testName: string, testInput: string) {
     try {
       const reference = testName.split('-') as $Reference
-      const parsed = JSON.parse(testInput)
-      result = test(context, reference, parsed)
-      inputError = ''
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.log('test error', err.message)
+      if (reference[0] && reference[1] && reference[1].length === 5) {
+        const parsed = JSON.parse(testInput)
+        result = test(context, reference, parsed)
+        inputError = ''
+      } else {
+        inputError = 'Test reference must match pattern "<name>-<unique>"'
       }
+    } catch (err: unknown) {
+      console.log('An error occurred during the test', err)
       inputError = `${err}`
     }
   }
-  $: handleTest(context, testName, input)
+  $: input && handleTest(context, testName, input)
 </script>
 
 <h3>test</h3>
