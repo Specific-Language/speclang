@@ -1,15 +1,14 @@
 import { PRIMITIVES } from './constants';
-import { get_slice } from './dictionary';
+import { slice } from './dictionary';
 import type { $Context, $Dictionary, $Reference, $ReferenceList, $ReferenceMap, $Value } from './types';
 
 export function test(context: $Context, ref: $Reference, value: $Value): boolean {
   context.option?.verbose && console.log('test', ref, value)
-  const slice = get_slice(context, ref)
-  if (Object.entries(slice).length === 0) {
+  const subcontext = slice(context, ref)
+  if (Object.entries(subcontext).length === 0) {
     throw Error(`No context exists for reference [${ref.join('-')}]`)
   }
-  const { define, extend, assign, values } = slice
-  console.log(slice)
+  const { define, extend, assign, values } = subcontext
   const define_result = define && test_define(context, define, ref, value)
   if (define_result === false) {
     context.option?.verbose && console.log(' * failed test_define', ref, value)

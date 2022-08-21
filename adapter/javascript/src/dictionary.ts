@@ -1,24 +1,24 @@
 import type { $Context, $Reference, $Value } from './types'
 
-export function get_slice(context: $Context, [name, unique]: $Reference): $Context {
-  const result: $Context = {}
-  const name_context = get_nameslice(context, name)
-  Object.keys(name_context).forEach((dictionary) => {
-    if (context[dictionary][name] && context[dictionary][name][unique] !== undefined) {
-      result[dictionary] ??= {}
-      result[dictionary][name] ??= {}
-      result[dictionary][name][unique] = context[dictionary][name][unique] 
-    }
-  })
-  return result
-}
-
-function get_nameslice(context: $Context, name: string): $Context {
+export function lookup(context: $Context, name: string): $Context {
   const result: $Context = {}
   Object.keys(context).forEach((dictionary) => {
     if (context[dictionary][name] !== undefined) {
       result[dictionary] ??= {}
       result[dictionary][name] = context[dictionary][name]
+    }
+  })
+  return result
+}
+
+export function slice(context: $Context, [name, unique]: $Reference): $Context {
+  const result: $Context = {}
+  const name_context = lookup(context, name)
+  Object.keys(name_context).forEach((dictionary) => {
+    if (context[dictionary][name] && context[dictionary][name][unique] !== undefined) {
+      result[dictionary] ??= {}
+      result[dictionary][name] ??= {}
+      result[dictionary][name][unique] = context[dictionary][name][unique] 
     }
   })
   return result
@@ -32,7 +32,6 @@ export function set_define(context: $Context, target: $Reference, parent?: $Refe
     context.define[parent_name] ??= {}
     context.define[parent_name][parent_unique] ??= {}
     context.define[parent_name][parent_unique][name] = unique
-    set_parent(context, target, parent)
   }
   context.define[name] ??= {}
   context.define[name][unique] ??= {}
@@ -46,7 +45,6 @@ export function set_extend(context: $Context, target: $Reference, parent: $Refer
   const [target_name, target_unique] = target
   context.extend[parent_name][parent_unique][target_name] ??= []
   context.extend[parent_name][parent_unique][target_name].push(target_unique)
-  set_parent(context, target, parent)
 }
 
 export function set_value(context: $Context, target: $Reference, value: $Value, parent?: $Reference) {
@@ -65,15 +63,5 @@ export function set_value(context: $Context, target: $Reference, value: $Value, 
     context.assign[parent_name] ??= {}
     context.assign[parent_name][parent_unique] ??= {}
     context.assign[parent_name][parent_unique][name] = unique
-    set_parent(context, target, parent)
   }
-}
-
-export function set_parent(context: $Context, target: $Reference, value: $Reference) {
-  context.parent ??= {}
-  const [target_name, target_unique] = target
-  context.parent[target_name] ??= {}
-  context.parent[target_name][target_unique] ??= {}
-  const [name, unique] = value
-  context.parent[target_name][target_unique][name] = unique
 }
