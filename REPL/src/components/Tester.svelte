@@ -16,16 +16,12 @@
 
   async function handleTest(context: $Context, testName: string, testInput: string) {
     try {
-      const split = testName.split('-')
-      const unique = split.pop()
-      const name = split.join('-')
-      if (name && unique && unique.length === 5) {
-        const reference: $Reference = [name, unique]
+      if (testName) {
         const parsed = JSON.parse(testInput)
-        result = test(context, reference, parsed)
+        result = test(context, testName, parsed)
         inputError = ''
       } else {
-        inputError = 'Test reference must match pattern <name>-<unique>'
+        inputError = 'Enter a test name'
       }
     } catch (err: unknown) {
       console.log('An error occurred during the test', err)

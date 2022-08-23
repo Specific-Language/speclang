@@ -1,10 +1,4 @@
-import type { $Reference, $Map } from "./types"
-
-export function generate_reference(name: string): $Reference {
-  const unique = String(Number(Math.random().toPrecision(5).substring(2))).padEnd(5, '0')
-  const reference: $Reference = [name, unique]
-  return reference
-}
+import type { $Map } from "./types"
 
 export function has_reference(name: string, value: $Map): boolean {
   return Object.keys(value).some((key) => {

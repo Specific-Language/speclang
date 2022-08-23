@@ -5,7 +5,9 @@
   export let context: $Context
 
   let input: string = `define point {
-  define x extend number {}
+  define x extend number {
+    maximum = 5
+  }
   define y extend number {}
 }
 

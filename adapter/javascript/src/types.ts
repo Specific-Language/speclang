@@ -1,7 +1,7 @@
 export type $Value =
   | $Primitive
-  | $Map
   | $Value[]
+  | { [name: string]: $Value }
 
 export type $Primitive =
   | string
@@ -9,27 +9,15 @@ export type $Primitive =
   | boolean
   | undefined
 
-export type $Map = {
-  [name: string]: $Value
+export type $Map<T extends $Value = $Value> = {
+  [name: string]: T
 }
-
-export type $Dictionary<T extends $Value> = {
-  [name: string]: {
-    [unique: string]: T
-  },
-}
-
-export type $Reference = [name: string, unique: string]
-export type $ReferenceMap = Record<$Reference[0], $Reference[1]>
-export type $ReferenceList = Record<$Reference[0], $Reference[1][]>
 
 export type $Context = {
-  [name: string]: $Dictionary<$Value>
+  [name: string]: $Map<$Value>
 } & {
-  option?: $Dictionary<$Value>
-  define?: $Dictionary<$ReferenceMap>
-  extend?: $Dictionary<$ReferenceList>
-  parent?: $Dictionary<$ReferenceMap>
-  assign?: $Dictionary<$ReferenceMap>
-  values?: $Dictionary<$Value>
+  option?: $Map<$Value>
+  alias?: $Map<string[]>
+  define?: $Map<$Value[]>
+  value?: $Map<$Value>
 }
