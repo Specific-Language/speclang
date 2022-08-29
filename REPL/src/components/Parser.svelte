@@ -4,17 +4,27 @@
   
   export let context: $Context
 
-  let input: string = `define point {
-  define x extend number {
-    maximum = 5
-  }
-  define y extend number {}
+//   let input: string = `define point {
+//   define x extend number {
+//     maximum = 5
+//   }
+//   define y extend number {}
+// }
+
+// define origin extend point {
+//   x = 0
+//   y = 0
+// }`
+let input: string = `point {
+  x extend number {}
+  y extend number {}
 }
 
-define origin extend point {
-  x = 0
-  y = 0
-}`
+side extend list {
+  each extend point {}
+  length = 2
+}
+`
   let inputError: string = ''
 
   async function handleParse(input: string) {

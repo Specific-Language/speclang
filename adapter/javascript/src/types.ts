@@ -17,7 +17,6 @@ export type $Context = {
   [name: string]: $Map<$Value>
 } & {
   option?: $Map<$Value>
-  alias?: $Map<string[]>
   define?: $Map<$Value[]>
-  value?: $Map<$Value>
+  alias?: $Map<string[]>
 }
