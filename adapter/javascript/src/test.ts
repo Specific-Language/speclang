@@ -22,11 +22,11 @@ export function test(context: $Context, reference: string, value: $Value): boole
 }
 
 function test_define(context: $Context, reference: string, value: $Value): boolean {
-  if (!context.define || !context.define[reference]) {
+  if (!context.value || !context.value[reference]) {
     throw Error(`Expected to find define spec for ${reference}`)
   }
   context.option?.verbose && console.log('| test_define', reference, value)
-  const spec = context.define[reference]
+  const spec = context.value[reference]
   return Object.entries(spec).every(([name, _]) => test_property(context, name, value))
 }
 

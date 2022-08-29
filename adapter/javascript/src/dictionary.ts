@@ -2,23 +2,29 @@ import type { $Context, $Map, $Value } from './types'
 
 export function lookup(context: $Context, name: string): $Context {
   const result: $Context = {}
-  result.define ??= {}
-  context.define ??= {}
-  if (context.define[name] !== undefined) {
-    result.define[name] = context.define[name]
+  result.value ??= {}
+  context.value ??= {}
+  if (context.value[name] !== undefined) {
+    result.value[name] = context.value[name]
   }
   return result
 }
 
-export function define_value(context: $Context, reference: string, value: $Value) {
+export function set_alias(context: $Context, reference: string, alias: string) {
+  context.alias ??= {}
+  context.alias[alias] ??= []
+  context.alias[alias].push(reference)
+}
+
+export function set_value(context: $Context, reference: string, value: $Value) {
   // if (['string', 'number', 'boolean'].includes(reference)) {
   //   if (typeof value !== reference) {
   //     throw Error('Literal values (string, number, boolean) are constrained by type')
   //   }
   // }
-  context.define ??= {}
-  context.define[reference] ??= []
-  context.define[reference].push(value)
+  context.value ??= {}
+  context.value[reference] ??= []
+  context.value[reference].push(value)
 }
 
 export function has_reference(name: string, value: $Map): boolean {
