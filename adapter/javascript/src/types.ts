@@ -1,20 +1,19 @@
 export type $Value =
   | $Primitive
-  | $Value[]
   | { [name: string]: $Value }
 
 export type $Primitive =
   | string
   | number
   | boolean
-  | undefined
+  | $Value[]
 
 export type $Map<T extends $Value = $Value> = {
   [name: string]: T
 }
 
 export type $Context = {
-  [name: string]: $Map<$Value>
+  [name: string]: $Map<$Value> | undefined
 } & {
   option?: $Map<$Value>
   value?: $Map<$Value[]>

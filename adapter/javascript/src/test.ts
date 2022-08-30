@@ -1,10 +1,10 @@
 import { PRIMITIVES } from './constants';
-import { lookup } from './dictionary';
 import type { $Context, $Value } from './types';
 
 export function test(context: $Context, reference: string, value: $Value): boolean {
   context.option?.verbose && console.log('test', reference, value)
-  const subcontext = lookup(context, reference)
+  context.value ??= {}
+  const subcontext = context.value[reference]
   if (Object.entries(subcontext).length === 0) {
     throw Error(`No context exists for reference [${reference}]`)
   }
