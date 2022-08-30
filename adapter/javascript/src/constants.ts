@@ -1,28 +1,6 @@
-import { $Map } from "./types"
-
-export const PRIMITIVES = [
+export const PRIMITIVES: string[] = [
   'number',
   'string',
   'boolean',
   'list',
 ]
-
-export const PRIMITIVE_SPECS: $Map = {
-  number: {
-    maximum: {
-      number: {}
-    },
-    minimum: {
-      number: {}
-    },
-  }, 
-  // string: {
-    
-  // },
-  // boolean: {
-
-  // },
-  // list: {
-
-  // }
-}

@@ -1,11 +1,10 @@
-import { PRIMITIVES, PRIMITIVE_SPECS } from './constants'
-import { set_value, get_ordered_entries, set_alias, get_value } from './dictionary'
+import { PRIMITIVES } from './constants'
+import { set_value, get_ordered_entries, get_value } from './dictionary'
 import type { $Context, $Map, $Value } from './types'
 
 export function specify(context: $Context, parent: string, alias: string, value: $Value): string {
   const reference = `${parent}-${alias}`
   context.option?.verbose && console.log('specify', { parent_ref: parent, alias, value, reference })
-  set_alias(context, reference, alias)
   if (value instanceof Array) {
     value.forEach((sibling) => specify(context, parent, alias, sibling))
   } else if (value instanceof Object) {
@@ -38,7 +37,9 @@ function specify_extend(context: $Context, reference: string, value: $Value) {
     value.forEach((sibling) => specify_extend(context, reference, sibling))
   } else if (value instanceof Object) {
     get_ordered_entries(value).forEach(([child_name, child_value]) => {
-      const extend_ref = get_extend_reference(context, child_name, child_value)
+      const extend_ref = PRIMITIVES.includes(child_name)
+        ? test_primitive(context, child_name, child_value)
+        : test_spec(context, `$-input-${child_name}`, child_value)
       const child_ref = specify(context, reference, child_name, child_value)
       set_value(context, reference, wrap_reference(child_ref))
       set_value(context, child_ref, wrap_reference(extend_ref))
@@ -48,26 +49,32 @@ function specify_extend(context: $Context, reference: string, value: $Value) {
   }
 }
 
-function get_extend_reference(context: $Context, name: string, value: $Value): string {
-  if (PRIMITIVES.includes(name)) {
-    if (typeof value !== name) {
-      if (value instanceof Object) {
-        const primitive_spec = PRIMITIVE_SPECS[name]
-        console.log('@@@ need to test primitive spec', { name, value, primitive_spec })
-      } else {
-        throw Error(`Value did not match assigned primitive type: ${name}`)
-      }
-    }
-    return name
+function test_primitive(context: $Context, name: string, value: $Value): string {
+  context.option?.verbose && console.log(' - test_primitive', { name, value })
+  const reference = `$-${name}`
+  const type = value instanceof Array ? 'list' : typeof value
+  if (type === name) {
+    return reference
   }
-  const existing_ref = `$-input-${name}`
-  const existing_value = get_value(context, existing_ref)
+  if (type === 'object') {
+    if (Object.entries(value).length === 0) {
+      return reference
+    }
+    return test_spec(context, `$-${name}`, value)
+  }
+  throw Error(`Expected value to match primitive specification for ${name}`)
+}
+
+function test_spec(context: $Context, reference: string, value: $Value): string {
+  context.option?.verbose && console.log(' - test_spec', { reference, value })
+  const existing_value = get_value(context, reference)
   if (existing_value) {
+    console.log({ reference, existing_value, value })
     console.log('@@@ need to test existing complex spec for match')
   } else {
-    throw Error(`Expected to find a definition for ${name} within this document`)
+    throw Error(`Expected to find a definition for ${reference} within this document`)
   }
-  return existing_ref
+  return reference
 }
 
 function wrap_reference(reference: string): string {

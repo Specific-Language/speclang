@@ -6,8 +6,7 @@
   let context: $Context
 
   const display: $Map = {
-    alias: true,
-    value: true,
+    extend: true,
   }
 </script>
 

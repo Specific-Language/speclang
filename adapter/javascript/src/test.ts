@@ -3,8 +3,8 @@ import type { $Context, $Value } from './types';
 
 export function test(context: $Context, reference: string, value: $Value): boolean {
   context.option?.verbose && console.log('test', reference, value)
-  context.value ??= {}
-  const subcontext = context.value[reference]
+  context.extend ??= {}
+  const subcontext = context.extend[reference]
   if (Object.entries(subcontext).length === 0) {
     throw Error(`No context exists for reference [${reference}]`)
   }
@@ -22,20 +22,20 @@ export function test(context: $Context, reference: string, value: $Value): boole
 }
 
 function test_define(context: $Context, reference: string, value: $Value): boolean {
-  if (!context.value || !context.value[reference]) {
+  if (!context.extend || !context.extend[reference]) {
     throw Error(`Expected to find define spec for ${reference}`)
   }
   context.option?.verbose && console.log('| test_define', reference, value)
-  const spec = context.value[reference]
+  const spec = context.extend[reference]
   return Object.entries(spec).every(([name, _]) => test_property(context, name, value))
 }
 
 function test_values(context: $Context, reference: string, value: $Value): boolean {
   context.option?.verbose && console.log('| test_values', reference, value)
-  if (!context.value || !context.value[reference]) {
+  if (!context.extend || !context.extend[reference]) {
     throw Error(`Expected to find define spec for ${reference}`)
   }
-  const spec = context.value[reference]
+  const spec = context.extend[reference]
   return JSON.stringify(value) === JSON.stringify(spec)
 }
 

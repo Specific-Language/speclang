@@ -2,22 +2,15 @@ import type { $Context, $Map, $Value } from './types'
 
 export function get_value(context: $Context, reference: string): $Value | undefined {
   context.option?.verbose && console.log(' * get_value', { reference })
-  context.value ??= {}
-  return context.value[reference]
+  context.extend ??= {}
+  return context.extend[reference]
 }
 
 export function set_value(context: $Context, reference: string, value: $Value) {
   context.option?.verbose && console.log(' * set_value', { reference, value })
-  context.value ??= {}
-  context.value[reference] ??= []
-  context.value[reference].push(value)
-}
-
-export function set_alias(context: $Context, reference: string, alias: string) {
-  context.option?.verbose && console.log(' * set_alias', { reference, alias })
-  context.alias ??= {}
-  context.alias[alias] ??= []
-  context.alias[alias].push(reference)
+  context.extend ??= {}
+  context.extend[reference] ??= []
+  context.extend[reference].push(value)
 }
 
 export function has_reference(name: string, value: $Map): boolean {
