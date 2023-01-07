@@ -1,5 +1,3 @@
-export * from './dictionary'
-export * from './test'
-export * from './parse'
-export * from './specify'
 export * from './types'
+export * from './parse'
+export * from './test'

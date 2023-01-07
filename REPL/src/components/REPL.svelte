@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { $Context, $Map } from 'speclang'
   import Parser from './Parser.svelte'
-  import Tester from './Tester.svelte';
 
   let context: $Context
 
@@ -15,11 +14,11 @@
     <td>
       <Parser bind:context />
     </td>
-     {#if context}
+    <!-- {#if context}
       <td>
         <Tester {context} />
       </td>
-    {/if}
+    {/if} -->
   </tr>
 </table>
 
