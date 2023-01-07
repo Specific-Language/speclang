@@ -1,12 +1,9 @@
 pub mod speclang {
-  use serde_json::Value;
-  
   #[cfg(target_arch = "wasm32")]
   #[wasm_bindgen::prelude::wasm_bindgen]
   pub fn parse(input: &str) -> String {
     let formatted = format!("input {{{}}}", input);
-    print!("here {}", formatted);
-    let parsed: Value = match hcl::from_str(&formatted) {
+    let parsed: serde_json::Value = match hcl::from_str(&formatted) {
       Ok(value) => value,
       Err(error) => wasm_bindgen::throw_str(&error.to_string()),
     };
@@ -16,8 +13,7 @@ pub mod speclang {
   #[cfg(not(target_arch = "wasm32"))]
   pub fn parse(input: &str) -> String {
     let formatted = format!("input {{{}}}", input);
-    print!("here {}", formatted);
-    let parsed: Value = match hcl::from_str(&formatted) {
+    let parsed: serde_json::Value = match hcl::from_str(&formatted) {
       Ok(value) => value,
       Err(error) => panic!("{}", error)
     };
@@ -25,9 +21,9 @@ pub mod speclang {
   }
 
   #[cfg(test)]
-  mod tests {
-    use super::*;
-    use serde_json::json;
+  mod test {
+    mod helper;
+    use serde_json::*;
 
     #[test]
     fn success_definition_depth0() {
@@ -37,8 +33,7 @@ pub mod speclang {
       let expected = json!({
         "key": "value"
       });
-      let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      helper::expect::success(input, expected);
     }
     
     #[test]
@@ -55,8 +50,7 @@ pub mod speclang {
           "bar": true
         }
       });
-      let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      helper::expect::success(input, expected);
     }
 
     #[test]
@@ -77,8 +71,7 @@ pub mod speclang {
           }
         }
       });
-      let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      helper::expect::success(input, expected);
     }
 
     #[test]
@@ -105,26 +98,14 @@ pub mod speclang {
           }
         ]
       });
-      let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      helper::expect::success(input, expected);
     }
 
     #[test]
     fn error_hcl_parse_passthrough() {
-      let result = std::panic::catch_unwind(|| {
-        parse("invalid input");
-      });
-      let caught_error = match result {
-        Ok(_) => panic!("Expected an error"),
-        Err(error) => error,
-      };
-      let message = match caught_error.downcast_ref::<String>() {
-        Some(value) => value,
-        None => panic!("Expected a string error value"),
-      };
-      assert!(
-        message.contains("expected BlockBody, Identifier, or StringLit in line 1")
-      );
-    }      
+      let input = "invalid input";
+      let expected = "expected BlockBody, Identifier, or StringLit in line 1";
+      helper::expect::error(input, expected)
+    }
   }  
 }
