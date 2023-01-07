@@ -25,8 +25,7 @@ Repository: [speclang/adapter/javascript](https://github.com/Specific-Language/s
 
 ## tests
 
-- `$ cd test/node && npm t`
-- `$ cd test/browser && npm run dev`
+- `$ cd test && npm t`
 
 ## release
 
