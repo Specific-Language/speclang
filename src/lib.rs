@@ -1,4 +1,6 @@
 pub mod speclang {
+  mod dictionary;
+  mod shared;
   use serde_json::Value;
 
   fn parse_input(spec: &str) -> Result<Value, hcl::Error> {
@@ -13,7 +15,8 @@ pub mod speclang {
       Ok(value) => value,
       Err(error) => wasm_bindgen::throw_str(&error.to_string()),
     };
-    parsed_input["spec"].to_string()
+    let spec_json = &parsed_input["spec"];
+    spec_json.to_string()
   }
 
   #[cfg(not(target_arch = "wasm32"))]
@@ -22,12 +25,16 @@ pub mod speclang {
       Ok(value) => value,
       Err(error) => panic!("{}", &error.to_string()),
     };
-    parsed_input["spec"].to_string()
+    let spec_json = &parsed_input["spec"];
+    let mut dict = dictionary::Dictionary::new();
+    dictionary::define::spec_json(&mut dict, spec_json, "spec");
+    panic!("{}", dict);
+    spec_json.to_string()
   }
   
   #[cfg(test)]
   mod test {
-    mod helper;
+    mod shared;
     mod cases;
   }
 }
