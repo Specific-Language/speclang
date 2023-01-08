@@ -1,5 +1,7 @@
 pub mod speclang {
-  fn parse_input(spec: &str) -> Result<serde_json::Value, hcl::Error> {
+  use serde_json::Value;
+
+  fn parse_input(spec: &str) -> Result<Value, hcl::Error> {
     let input = format!("spec {{{}}}", spec);
     hcl::from_str(&input)
   }
