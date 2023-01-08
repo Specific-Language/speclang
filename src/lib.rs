@@ -22,7 +22,7 @@ pub mod speclang {
     };
     parsed_input["spec"].to_string()
   }
-
+  
   #[cfg(test)]
   mod test {
     mod helper;
