@@ -1,8 +1,8 @@
 #[cfg(test)]
-mod hcl2parse {
-  use serde_json::*;
+mod cases {
   use crate::speclang::parse;
   use crate::speclang::test::shared;
+  use serde_json::*;
   
   #[test]
   fn error_passthrough() {
@@ -23,20 +23,20 @@ mod hcl2parse {
         "key": "some value"
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
     
-    // #[test]
-    // fn success_assignment_array() {
-    //   let input = r#"
-    //     key = ["some value", 1.23]
-    //   "#;
-    //   let expected = json!({
-    //     "key": ["some value", 1.23]
-    //   });
-    //   let result = parse(input);
-    //   assert_eq!(result, expected.to_string());
-    // }
+    #[test]
+    fn success_assignment_array() {
+      let input = r#"
+        key = ["some value", 1.23]
+      "#;
+      let expected = json!({
+        "key": ["some value", 1.23]
+      });
+      let result = parse(input);
+      assert_eq!(result, expected);
+    }
 
     #[test]
     fn success_assignment_number() {
@@ -47,7 +47,7 @@ mod hcl2parse {
         "key": 12345
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
 
     #[test]
@@ -59,7 +59,7 @@ mod hcl2parse {
         "key": true
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
 
     #[test]
@@ -75,7 +75,7 @@ mod hcl2parse {
         }
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
   }
 
@@ -91,7 +91,7 @@ mod hcl2parse {
         "foo": {}
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
 
     #[test]
@@ -103,7 +103,7 @@ mod hcl2parse {
         "foo": { "bar": true }
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
 
     #[test]
@@ -117,7 +117,7 @@ mod hcl2parse {
         "cat": { "claws": { "sharp": true } }
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
 
     #[test]
@@ -137,7 +137,7 @@ mod hcl2parse {
         }
       });
       let result = parse(input);
-      assert_eq!(result, expected.to_string());
+      assert_eq!(result, expected);
     }
   }
 }

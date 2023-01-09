@@ -4,7 +4,15 @@
 
 - `$ cargo test`
 
-## build wasm
+### options
+
+|variable|value|reason|
+|-|-|-|
+|test command|`cargo test -- --nocapture`|print logs|
+|env:RUST_TEST_THREADS|1|run tests sequentially|
+|env:RUST_BACKTRACE|1|output full stack trace|
+
+<!-- ## build wasm
 
 - `$ wasm-pack build --target=bundler`
 - (optional) build preferred speclang adapter
@@ -19,4 +27,4 @@
 | wasm_bindgen method export | `export function parse(input) {`              | `export async function parse(input) {`                 |
 | wasm_bindgen method body   | insert at start of each method body           | `if (!wasm) { wasm = await initWasm(); }`              |
 
-2. edit `pkg/speclang.d.ts` to make every wasm_bindgen method return a `Promise` result
+2. edit `pkg/speclang.d.ts` to make every wasm_bindgen method return a `Promise` result -->
