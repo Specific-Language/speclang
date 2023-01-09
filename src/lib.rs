@@ -12,7 +12,7 @@ pub mod speclang {
     let result = hcl::from_str(&input);
     let parsed_input: serde_json::Value = match result {
       Ok(value) => value,
-      Err(error) => panic!("{}", &error.to_string()),
+      Err(error) => panic!("Parse error! {}", &error.to_string()),
     };
     parsed_input["spec"].to_owned()
   }
@@ -20,6 +20,7 @@ pub mod speclang {
   #[cfg(test)]
   mod test {
     mod shared;
+    mod define;
     mod parse;
   }
 }
