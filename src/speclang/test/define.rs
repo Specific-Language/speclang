@@ -9,6 +9,7 @@ fn success() {
     name = "George"
     age = 15
     temperament = temperaments-wellbehaved
+    hungry = (time-unixref-hrs - lastfed-hrs) > 4
     claws {
       sharp = true
       retractable = true
