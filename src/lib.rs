@@ -28,3 +28,13 @@ pub mod speclang {
 // #[cfg(not(target_arch = "wasm32"))]
 // #[cfg(target_arch = "wasm32")]
 // #[wasm_bindgen::prelude::wasm_bindgen]
+
+/* next steps : */
+
+// events
+/// need an "evaluate" event to get the current value? ex: cat-hungry
+//// eval ${} statements 
+//// or can this be baked into get()? getDefinition() versus getValue(context) 
+/// also need a "recognize" event to recognize an unknown value as some definition or partial
+
+// combine define / parse fns here?
