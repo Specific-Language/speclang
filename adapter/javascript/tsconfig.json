@@ -16,8 +16,9 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "outDir": "dist",
+    "outDir": "dist"
+    // "typeRoots": ["node_modules/@types", "env.d.ts"]
   },
-  "include": ["src"],
+  "include": ["src", "env.d.ts"],
   "exclude": ["test", "dist"]
 }

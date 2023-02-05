@@ -1,5 +1,5 @@
-use crate::speclang::test::shared;
-use crate::speclang::parse;
+use crate::test::shared;
+use crate::parse;
 use serde_json::*;
 
 #[test]

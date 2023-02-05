@@ -6,7 +6,7 @@
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/$.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -16,12 +16,16 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "(vite build --outDir=./dist) && (tsc --emitDeclarationOnly)",
+    "build": "(rsw build) && (vite build --outDir=./dist) && (tsc --emitDeclarationOnly)",
     "preview": "vite preview"
   },
   "devDependencies": {
     "shx": "^0.3.4",
-    "typescript": "^4.8.2",
-    "vite": "^2.9.15"
+    "typescript": "^4.9.4",
+    "vite": "^4.0.4",
+    "vite-plugin-rsw": "^2.0.11"
+  },
+  "dependencies": {
+    "speclang": "file:../../pkg"
   }
 }

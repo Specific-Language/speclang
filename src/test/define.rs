@@ -1,5 +1,5 @@
-use crate::speclang::define;
-use crate::speclang::types;
+use crate::define;
+use crate::types;
 use serde_json::Value;
 use serde_json::Number;
 

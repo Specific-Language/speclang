@@ -1,5 +1,5 @@
 pub mod define {
-  use crate::speclang::types::Trie;
+  use crate::types::Trie;
   use serde_json::Value;
 
   pub fn spec(trie: &mut Trie, json: &Value, prefix: &str) {

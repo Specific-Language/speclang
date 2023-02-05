@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod expect {
-  use crate::speclang::parse;
+  use crate::parse;
 
   pub fn error(input: &str) -> String {
     let result = std::panic::catch_unwind(|| parse(input));
