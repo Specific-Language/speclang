@@ -19,19 +19,18 @@ circle {
 }
 
 polygon {
-  N = sides.length
+  N = number
   sides extends list {
+    length = N
     each extends line {
-      _next_side = sides[(index + 1) % sides.length]
+      _next_side = sides[(index + 1) % N]
       b = _next_side.a
     }
   }
 }
 
 triangle extends polygon {
-  sides extends list {
-    length = 3
-  }
+  N = 3
 }
 
 equilateral_triangle extends triangle {
@@ -51,24 +50,15 @@ isosceles_triangle extends triangle {
 }
 
 rectangle extends polygon {
-  sides {
-    length = 4
-    each {
-      _opposite_side = sides[(index + 2) % sides.length]
-      length = _opposite_side.length
-    }
+  N = 4
+  sides each {
+    _opposite_side = sides[(index + 2) % sides.length]
+    length = _opposite_side.length
   }
 }
 
 square extends rectangle {
   sides each {
     length = sides[0].length
-  }
-}
-
-Ngon extends polygon {
-  N = number
-  sides {
-    length = N
   }
 }
