@@ -21,8 +21,8 @@ circle {
 polygon {
   sides extends list {
     each extends line {
-      _next = sides[(index + 1) % sides.length]
-      b = _next.a
+      _next_side = sides[(index + 1) % sides.length]
+      b = _next_side.a
     }
   }
 }
@@ -46,26 +46,22 @@ acute_triangle extends triangle {
 }
 
 isosceles_triangle extends triangle {
-  is_isosceles = (sides[0].length == sides[1].length) ||
-                 (sides[1].length == sides[2].length) ||
-                 (sides[0].length == sides[2].length)
+  is_isosceles = (sides[0].length == sides[1].length) || (sides[1].length == sides[2].length) || (sides[0].length == sides[2].length)
 }
 
 rectangle extends polygon {
   sides {
-    each {
-      _opposite = sides[(index + 2) % sides.length]
-      length = _opposite.length
-    }
     length = 4
+    each {
+      _opposite_side = sides[(index + 2) % sides.length]
+      length = _opposite_side.length
+    }
   }
 }
 
 square extends rectangle {
-  sides {
-    each {
-      length = sides[0].length
-    }
+  sides each {
+    length = sides[0].length
   }
 }
 
