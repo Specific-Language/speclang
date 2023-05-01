@@ -19,6 +19,7 @@ circle {
 }
 
 polygon {
+  N = sides.length
   sides extends list {
     each extends line {
       _next_side = sides[(index + 1) % sides.length]
