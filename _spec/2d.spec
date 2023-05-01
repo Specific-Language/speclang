@@ -23,8 +23,8 @@ polygon {
   sides extends list {
     length = N
     each extends line {
-      _next_side = sides[(index + 1) % N]
-      b = _next_side.a
+      next_side = sides[(index + 1) % N]
+      b = next_side.a
     }
   }
 }
@@ -52,8 +52,8 @@ isosceles_triangle extends triangle {
 rectangle extends polygon {
   N = 4
   sides each {
-    _opposite_side = sides[(index + 2) % sides.length]
-    length = _opposite_side.length
+    opposite_side = sides[(index + 2) % sides.length]
+    length = opposite_side.length
   }
 }
 
