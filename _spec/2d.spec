@@ -5,30 +5,40 @@ point {
   y = number
 }
 
-side extend list {
-  each = point
-  length = 2
+line {
+  a = point
+  b = point
+  length = distance(a, b)
 }
 
-shape {
+rectangle {
   sides extend list {
-    each = side
-    # sides connect to form a shape
+    each extend line {
+      origin = (index == 3) ? sides[index - 3] : sides[index + 1]
+      opposite = (index % 2 == 0) ? sides[index + 1] : sides[index - 1]
+    }
+    length = 4
   }
-  angles extend list {
-    each = number
-    length = sides.length
-    # angles match sides
-    # computed?
+  constraints {
+    connected_sides = all(sides, side => side.a.x == side.origin.b.x && side.a.y == side.origin.b.y)
+    equal_length_opposite = all(sides, side => side.length == side.opposite.length)
   }
-}
-
-rectangle extend shape {
-  angles = [90, 90, 90, 90]
 }
 
 square extend rectangle {
-  sides {
-    # only 1 length value within list (all side lengths equal)
+  constraints {
+    equal_length_all_sides = all(sides, side => side.length == sides[0].length)
+  }
+}
+
+triangle {
+  sides extend list {
+    each extend line {
+      origin = (index == 2) ? sides[index - 2] : sides[index + 1]
+    }
+    length = 3
+  }
+  constraints {
+    connected_sides = all(sides, side => side.a.x == side.origin.b.x && side.a.y == side.origin.b.y)
   }
 }
