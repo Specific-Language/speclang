@@ -1,16 +1,16 @@
-pub mod types;
+pub mod context;
 mod lexicon;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn define_str(spec: &str) {
-  let mut trie = types::Trie::new();
-  define(&mut trie, spec);
-  println!("{}", trie);
+pub fn define_str(name: &str, spec: &str) {
+  let mut node = context::ContextNode::new();
+  define(&mut node, name, spec);
+  println!("{}", node);
 }
 
-pub fn define(trie: &mut types::Trie, spec: &str) {
+pub fn define(node: &mut context::ContextNode, name: &str, spec: &str) {
   let spec_json = parse(spec);
-  lexicon::define::spec(trie, &spec_json, "root");
+  lexicon::define::spec(node, name, &spec_json);
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
