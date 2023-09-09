@@ -57,9 +57,14 @@ pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), Val
         }
     }
 
-    if last_part_type == Some("action") || open_parentheses_count != 0 {
-        println!("Debug: Expression ends with an operator or unbalanced parentheses.");
-        return Err(ValidationError::InvalidExpressionSyntax("Invalid ending or unbalanced parentheses".to_string()));
+    if open_parentheses_count != 0 {
+        println!("Debug: Expression ends with unbalanced parentheses.");
+        return Err(ValidationError::InvalidExpressionSyntax("Unbalanced parentheses".to_string()));
+    }
+
+    if last_part_type == Some("operator") {
+        println!("Debug: Expression ends with an operator.");
+        return Err(ValidationError::InvalidExpressionSyntax("Unbalanced operator, expected value".to_string()));
     }
 
     Ok(())
