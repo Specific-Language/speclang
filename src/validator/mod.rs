@@ -4,7 +4,6 @@ use regex::Regex;
 use serde_json::Value;
 
 pub mod expression;
-pub mod structure;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValidationError {
