@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use serde_json::Value;
+use regex::Regex;
+
 use crate::validator::ValidationError;
 
 pub mod tokenizer;
@@ -46,4 +48,11 @@ pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), Val
         },
         ExpressionType::Unknown => Err(ValidationError::InvalidExpression)
     }
+}
+
+pub fn find(input: &str) -> Vec<String> {
+    let re = Regex::new(r"\$\{([^\}]+)\}").unwrap();
+    re.captures_iter(input)
+        .map(|cap| cap[1].to_string())
+        .collect()
 }
