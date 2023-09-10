@@ -39,18 +39,16 @@ pub fn validate(value: &str, context: &Map<String, Value>) -> Result<(), Validat
 }
 
 fn detect_sequence_error(last_token: Option<&Token>, token: &Token, context: &Map<String, Value>) -> Option<&'static str> {
+    if token == &Token::Operator(Operator::Logic(LogicOp::Not)) {
+        match last_token {
+            Some(Token::Value(_)) => return Some("Unexpected Logic::Not operator after a value"),
+            // Some(Token::Operator(Operator::Math(_))) => return Some("Unexpected Logic::Not operator after a Math operator"), // or does it transform the math value into a boolean condition?
+            _ => {
+                return None;
+            }
+        }
+    }
     match (last_token, token) {
-        // Logic::Not
-        (None, Token::Operator(Operator::Logic(LogicOp::Not)))
-            => None, 
-        (Some(Token::Operator(Operator::Logic(_))), Token::Operator(Operator::Logic(LogicOp::Not))) 
-            => None,
-        (Some(Token::Value(_)), Token::Operator(Operator::Logic(LogicOp::Not))) 
-            => Some("Unexpected Logic::Not operator after a value"),
-        (Some(Token::Operator(Operator::Math(_))), Token::Operator(Operator::Logic(LogicOp::Not))) 
-            => Some("Unexpected Logic::Not operator after a Math operator"),
-
-        // Other operators
         (None, Token::Operator(_)) 
             => Some("Expression starts with a binary operator"),
         (Some(Token::Operator(_)), Token::Operator(_)) 
@@ -103,6 +101,16 @@ mod tests {
     #[test]
     fn negation() {
         let input = r#"!x"#;
+        let mut context: Map<String, Value> = Map::new();
+        context.insert("x".to_owned(), json!(true));
+        let result = super::validate(input, &context);
+        println!("result {:?}", result);
+        assert_eq!(result.is_ok(), true);
+    }
+
+    #[test]
+    fn value_negation() {
+        let input = r#"!3.14"#;
         let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         let result = super::validate(input, &context);
