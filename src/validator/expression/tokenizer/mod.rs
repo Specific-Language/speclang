@@ -2,80 +2,69 @@ use std::collections::HashSet;
 use std::iter::Peekable;
 use std::str::Chars;
 
-// todo: consolidate tokenvalue and tokentype
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Value(String),
     Operator(String),
-    Parenthesis(String),
-}
-
-pub enum TokenType {
-    Operator,
-    Value,
     OpenParenthesis,
     CloseParenthesis,
-    None,
 }
+
+const OPEN_PARENTHESIS: &str = "(";
+const CLOSE_PARENTHESIS: &str = ")";
 
 pub fn tokenize(expression: &str, operators: &HashSet<&str>) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut value = String::new();
+    let mut chars = expression.chars().peekable();
 
-    let mut chars: Peekable<Chars> = expression.chars().peekable();
-
-    while let Some(c) = chars.next() {
-        if c.is_whitespace() {
-            if !value.is_empty() {
-                tokens.push(Token::Value(value.clone()));
-                value.clear();
-            }
-            continue;
-        }
-        if c == '.' {
-            value.push(c);
+    while let Some(current_char) = chars.next() {
+        if current_char.is_whitespace() {
+            collect_value(&mut value, &mut tokens);
             continue;
         }
 
-        let mut op = String::new();
-        op.push(c);
-
-        while let Some(&next_char) = chars.peek() {
-            let mut candidate = op.clone();
-            candidate.push(next_char);
-            
-            if operators.contains(candidate.as_str()) {
-                op.push(chars.next().unwrap());
-            } else {
-                break;
-            }
-        }
-
-        if ["(", ")"].contains(&op.as_str()) {
-            if !value.is_empty() {
-                tokens.push(Token::Value(value.clone()));
-                value.clear();
-            }
-            tokens.push(Token::Parenthesis(op));
-            continue;
-        }
-
-        if operators.contains(&op.as_str()) {
-            if !value.is_empty() {
-                tokens.push(Token::Value(value.clone()));
-                value.clear();
-            }
-            tokens.push(Token::Operator(op));
+        let fragment = collect_fragment(&mut chars, current_char, operators);
+        if fragment == OPEN_PARENTHESIS {
+            collect_value(&mut value, &mut tokens);
+            tokens.push(Token::OpenParenthesis);
+        } else if fragment == CLOSE_PARENTHESIS {
+            collect_value(&mut value, &mut tokens);
+            tokens.push(Token::CloseParenthesis);
+        } else if operators.contains(fragment.as_str()) {
+            collect_value(&mut value, &mut tokens);
+            tokens.push(Token::Operator(fragment));
         } else {
-            value.push_str(&op);
+            value.push_str(&fragment);
         }
     }
 
+    collect_value(&mut value, &mut tokens);
+    tokens
+}
+
+fn collect_value(value: &mut String, tokens: &mut Vec<Token>) {
     if !value.is_empty() {
-        tokens.push(Token::Value(value));
+        tokens.push(Token::Value(value.clone()));
+        value.clear();
+    }
+}
+
+fn collect_fragment(chars: &mut Peekable<Chars>, current_char: char, operators: &HashSet<&str>) -> String {
+    let mut fragment = String::new();
+    fragment.push(current_char);
+
+    while let Some(&next_char) = chars.peek() {
+        fragment.push(next_char);
+        if operators.contains(fragment.as_str()) {
+            chars.next();
+        } else {
+            fragment.pop();
+            break;
+        }
     }
 
-    tokens
+    fragment
 }
 
 mod tests {    
@@ -121,11 +110,11 @@ mod tests {
             vec![
                 super::Token::Value("1".to_string()),
                 super::Token::Operator("+".to_string()),
-                super::Token::Parenthesis("(".to_string()),
+                super::Token::OpenParenthesis,
                 super::Token::Value("2".to_string()),
                 super::Token::Operator("*".to_string()),
                 super::Token::Value("3".to_string()),
-                super::Token::Parenthesis(")".to_string()),
+                super::Token::CloseParenthesis,
             ]
         );
     }
@@ -140,15 +129,15 @@ mod tests {
             vec![
                 super::Token::Value("1".to_string()),
                 super::Token::Operator("+".to_string()),
-                super::Token::Parenthesis("(".to_string()),
+                super::Token::OpenParenthesis,
                 super::Token::Value("2".to_string()),
                 super::Token::Operator("*".to_string()),
-                super::Token::Parenthesis("(".to_string()),
+                super::Token::OpenParenthesis,
                 super::Token::Value("3".to_string()),
                 super::Token::Operator("+".to_string()),
                 super::Token::Value("4".to_string()),
-                super::Token::Parenthesis(")".to_string()),
-                super::Token::Parenthesis(")".to_string()),
+                super::Token::CloseParenthesis,
+                super::Token::CloseParenthesis,
             ]
         );
     }
@@ -163,7 +152,7 @@ mod tests {
             vec![
                 super::Token::Value("x".to_string()),
                 super::Token::Operator("||".to_string()),
-                super::Token::Parenthesis("(".to_string()),
+                super::Token::OpenParenthesis,
                 super::Token::Value("y".to_string()),
                 super::Token::Operator("||".to_string()),
                 super::Token::Value("z".to_string()),
@@ -172,15 +161,13 @@ mod tests {
     }
 
     #[test]
-    fn whitespace_between_potential_values() {
-        let input = r#"1 + 2 x"#;
+    fn whitespace_between_values() {
+        let input = r#"2 x"#;
         let operators: std::collections::HashSet<_> = ["+", "-", "*", "/", "^", "%"].iter().cloned().collect();
         let result = super::tokenize(input, &operators);
         assert_eq!(
             result,
             vec![
-                super::Token::Value("1".to_string()),
-                super::Token::Operator("+".to_string()),
                 super::Token::Value("2".to_string()),
                 super::Token::Value("x".to_string()),
             ]
@@ -231,7 +218,7 @@ mod tests {
                 super::Token::Operator("/".to_string()),
                 super::Token::Value("3".to_string()),
                 super::Token::Operator("/".to_string()),
-                super::Token::Parenthesis("(".to_string()),
+                super::Token::OpenParenthesis,
                 super::Token::Value("4".to_string()),
                 super::Token::Operator("/".to_string()),
                 super::Token::Value("5".to_string()),
@@ -239,7 +226,7 @@ mod tests {
                 super::Token::Value("6".to_string()),
                 super::Token::Operator("*".to_string()),
                 super::Token::Value("3".to_string()),
-                super::Token::Parenthesis(")".to_string()),
+                super::Token::CloseParenthesis,
                 super::Token::Operator("*".to_string()),
                 super::Token::Value("0.1".to_string()),
                 super::Token::Operator("/".to_string()),

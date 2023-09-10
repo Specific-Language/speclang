@@ -1,68 +1,67 @@
 use std::collections::{HashSet, HashMap};
 use serde_json::Value;
-use crate::validator::{ValidationError, expression::{tokenizer::{self, TokenType, Token}, fail}};
+use crate::validator::{ValidationError, expression::{tokenizer::{self, Token}, fail}};
 use super::reference;
+
+const LOGICAL_AND: &str = "&&";
+const LOGICAL_OR: &str = "||";
+const LOGICAL_NOT: &str = "!";
+const LOGIC_OPERATORS: [&str; 3] = [LOGICAL_AND, LOGICAL_OR, LOGICAL_NOT];
 
 pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), ValidationError> {
     println!("logic::validate {}", value);
 
-    let operators: HashSet<_> = ["&&", "||", "!"].iter().cloned().collect();
+    let operators: HashSet<_> = LOGIC_OPERATORS.iter().cloned().collect();
     let tokens = tokenizer::tokenize(value, &operators);
 
     let mut open_parentheses_count = 0;
-    let mut last_token_type = TokenType::None;
+    let mut last_token: Option<&Token> = None;
 
-    for token in tokens.iter() {
-        match token {
-            Token::Operator(op) => {
-                if op == "!" && matches!(
-                    last_token_type,
-                    TokenType::None | TokenType::Operator | TokenType::OpenParenthesis
-                ) {
-                    // "!" is a unary operator, so it has special rules. 
-                    last_token_type = TokenType::Operator;
-                    continue;
-                } else if matches!(
-                    last_token_type,
-                    TokenType::None | TokenType::Operator | TokenType::OpenParenthesis
-                ) {
-                    return fail("Unexpected operator");
+    for token in &tokens {
+        if let Token::Operator(op) = token {
+            if op == LOGICAL_NOT {
+                match last_token {
+                    Some(Token::Value(_)) => return fail("Unexpected negation operator after a value"),
+                    Some(Token::CloseParenthesis) => return fail("Unexpected negation operator after a close parenthesis"),
+                    _ => {}
                 }
-                last_token_type = TokenType::Operator;
-            },
-            Token::Value(value_token) => {
-                if matches!(
-                    last_token_type,
-                    TokenType::Value | TokenType::CloseParenthesis
-                ) {
-                    return fail("Unexpected value");
-                }
-                match serde_json::from_str::<serde_json::Value>(value_token) {
-                    Ok(_) => {},
-                    Err(_) => reference::validate(value_token, context)?,
-                }
-                last_token_type = TokenType::Value;
-            },
-            Token::Parenthesis(p) => {
-                if p == "(" {
-                    open_parentheses_count += 1;
-                    last_token_type = TokenType::OpenParenthesis;
-                } else if p == ")" {
-                    open_parentheses_count -= 1;
-                    last_token_type = TokenType::CloseParenthesis;
-                }
-                if open_parentheses_count < 0 {
-                    return fail("Unbalanced parentheses");
+            } else {
+                match last_token {
+                    None => return fail("Expression starts with a binary operator"),
+                    Some(Token::Operator(_)) => return fail("Operator after another operator"),
+                    Some(Token::OpenParenthesis) => return fail("Operator after an open parenthesis"),
+                    _ => {}
                 }
             }
         }
+
+        if let Token::Value(value_token) = token {
+            match last_token {
+                Some(Token::Value(_)) => return fail("Value after another value"),
+                Some(Token::CloseParenthesis) => return fail("Value after a close parenthesis"),
+                _ => {}
+            }
+            match serde_json::from_str::<serde_json::Value>(value_token) {
+                Ok(_) => {},
+                Err(_) => reference::validate(value_token, context)?,
+            }
+        } else if token == &Token::OpenParenthesis {
+            open_parentheses_count += 1;
+        } else if token == &Token::CloseParenthesis {
+            open_parentheses_count -= 1;
+            if open_parentheses_count < 0 {
+                return fail("Close parenthesis but none were open");
+            }
+        }
+
+        last_token = Some(token);
     }
 
     if open_parentheses_count != 0 {
         return fail("Unbalanced parentheses at the end");
     }
 
-    if matches!(last_token_type, TokenType::Operator) {
+    if matches!(last_token, Some(Token::Operator(_))) {
         return fail("Expression ends with an operator");
     }
 

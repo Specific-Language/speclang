@@ -19,7 +19,7 @@ pub enum ExpressionType {
 }
 
 pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), ValidationError> {
-    let identify_expression_type = || -> ExpressionType {
+    let identify_expression = || -> ExpressionType {
         if primitive::validate(value).is_ok() {
             return ExpressionType::Primitive;
         }
@@ -35,12 +35,14 @@ pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), Val
         ExpressionType::Unknown
     };
 
-    match identify_expression_type() {
-        ExpressionType::Primitive
+    match identify_expression() {
+        | ExpressionType::Primitive
         | ExpressionType::Math
         | ExpressionType::Logic
-        | ExpressionType::Reference => Ok(()),
-        ExpressionType::Unknown => Err(ValidationError::InvalidExpression),
+        | ExpressionType::Reference
+            => Ok(()),
+        | ExpressionType::Unknown
+            => Err(ValidationError::InvalidExpression),
     }
 }
 
