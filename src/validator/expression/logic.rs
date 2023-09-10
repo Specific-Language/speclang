@@ -1,6 +1,6 @@
 use std::collections::{HashSet, HashMap};
 use serde_json::Value;
-use crate::validator::{ValidationError, expression::tokenizer::{self, TokenType}};
+use crate::validator::{ValidationError, expression::{tokenizer::{self, TokenType, Token}, fail}};
 use super::reference;
 
 pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), ValidationError> {
@@ -10,61 +10,60 @@ pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), Val
     let tokens = tokenizer::tokenize(value, &operators);
 
     let mut open_parentheses_count = 0;
-    let mut last_part_type: Option<&str> = None;
+    let mut last_token_type = TokenType::None;
 
     for token in tokens.iter() {
         match token {
-            TokenType::Operator(op) => {
-                if op == "!" && (last_part_type.is_none()
-                    || last_part_type == Some("operator")
-                    || last_part_type == Some("(")) {
+            Token::Operator(op) => {
+                if op == "!" && matches!(
+                    last_token_type,
+                    TokenType::None | TokenType::Operator | TokenType::OpenParenthesis
+                ) {
                     // "!" is a unary operator, so it has special rules. 
-                    last_part_type = Some("operator");
+                    last_token_type = TokenType::Operator;
                     continue;
-                } else if last_part_type.is_none() 
-                    || last_part_type == Some("operator") 
-                    || last_part_type == Some("(") {
-                    println!("Debug: Operator found where it shouldn't be.");
-                    return Err(ValidationError::InvalidExpressionSyntax("Unexpected operator".to_string()));
+                } else if matches!(
+                    last_token_type,
+                    TokenType::None | TokenType::Operator | TokenType::OpenParenthesis
+                ) {
+                    return fail("Unexpected operator");
                 }
-                last_part_type = Some("operator");
+                last_token_type = TokenType::Operator;
             },
-            TokenType::Value(op) => {
-                if last_part_type == Some("value") 
-                    || last_part_type == Some(")") {
-                    println!("Debug: Value found where it shouldn't be.");
-                    return Err(ValidationError::InvalidExpressionSyntax("Unexpected value".to_string()));
+            Token::Value(value_token) => {
+                if matches!(
+                    last_token_type,
+                    TokenType::Value | TokenType::CloseParenthesis
+                ) {
+                    return fail("Unexpected value");
                 }
-                match serde_json::from_str::<serde_json::Value>(&op) {
+                match serde_json::from_str::<serde_json::Value>(value_token) {
                     Ok(_) => {},
-                    Err(_) => reference::validate(&op, context)?,
+                    Err(_) => reference::validate(value_token, context)?,
                 }
-                last_part_type = Some("value");
+                last_token_type = TokenType::Value;
             },
-            TokenType::Parenthesis(p) => {
+            Token::Parenthesis(p) => {
                 if p == "(" {
                     open_parentheses_count += 1;
-                    last_part_type = Some("(");
-                } else {
+                    last_token_type = TokenType::OpenParenthesis;
+                } else if p == ")" {
                     open_parentheses_count -= 1;
-                    last_part_type = Some(")");
+                    last_token_type = TokenType::CloseParenthesis;
                 }
                 if open_parentheses_count < 0 {
-                    println!("Debug: Parentheses are unbalanced.");
-                    return Err(ValidationError::InvalidExpressionSyntax("Unbalanced parentheses".to_string()));
+                    return fail("Unbalanced parentheses");
                 }
             }
         }
     }
 
     if open_parentheses_count != 0 {
-        println!("Debug: Expression ends with unbalanced parentheses.");
-        return Err(ValidationError::InvalidExpressionSyntax("Unbalanced parentheses".to_string()));
+        return fail("Unbalanced parentheses at the end");
     }
 
-    if last_part_type == Some("operator") {
-        println!("Debug: Expression ends with an operator.");
-        return Err(ValidationError::InvalidExpressionSyntax("Unbalanced operator, expected value".to_string()));
+    if matches!(last_token_type, TokenType::Operator) {
+        return fail("Expression ends with an operator");
     }
 
     Ok(())

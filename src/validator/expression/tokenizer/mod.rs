@@ -2,14 +2,23 @@ use std::collections::HashSet;
 use std::iter::Peekable;
 use std::str::Chars;
 
+// todo: consolidate tokenvalue and tokentype
 #[derive(Debug, PartialEq, Clone)]
-pub enum TokenType {
+pub enum Token {
     Value(String),
     Operator(String),
     Parenthesis(String),
 }
 
-pub fn tokenize(expression: &str, operators: &HashSet<&str>) -> Vec<TokenType> {
+pub enum TokenType {
+    Operator,
+    Value,
+    OpenParenthesis,
+    CloseParenthesis,
+    None,
+}
+
+pub fn tokenize(expression: &str, operators: &HashSet<&str>) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut value = String::new();
 
@@ -18,13 +27,13 @@ pub fn tokenize(expression: &str, operators: &HashSet<&str>) -> Vec<TokenType> {
     while let Some(c) = chars.next() {
         if c.is_whitespace() {
             if !value.is_empty() {
-                tokens.push(TokenType::Value(value.clone()));
+                tokens.push(Token::Value(value.clone()));
                 value.clear();
             }
             continue;
         }
         if c == '.' {
-            value.push('.');
+            value.push(c);
             continue;
         }
 
@@ -44,26 +53,26 @@ pub fn tokenize(expression: &str, operators: &HashSet<&str>) -> Vec<TokenType> {
 
         if ["(", ")"].contains(&op.as_str()) {
             if !value.is_empty() {
-                tokens.push(TokenType::Value(value.clone()));
+                tokens.push(Token::Value(value.clone()));
                 value.clear();
             }
-            tokens.push(TokenType::Parenthesis(op));
+            tokens.push(Token::Parenthesis(op));
             continue;
         }
 
         if operators.contains(&op.as_str()) {
             if !value.is_empty() {
-                tokens.push(TokenType::Value(value.clone()));
+                tokens.push(Token::Value(value.clone()));
                 value.clear();
             }
-            tokens.push(TokenType::Operator(op));
+            tokens.push(Token::Operator(op));
         } else {
             value.push_str(&op);
         }
     }
 
     if !value.is_empty() {
-        tokens.push(TokenType::Value(value));
+        tokens.push(Token::Value(value));
     }
 
     tokens
@@ -78,9 +87,9 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("1".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Value("2".to_string()),
+                super::Token::Value("1".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Value("2".to_string()),
             ]
         );
     }
@@ -93,11 +102,11 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("1".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Value("2".to_string()),
-                super::TokenType::Operator("*".to_string()),
-                super::TokenType::Value("3".to_string()),
+                super::Token::Value("1".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Value("2".to_string()),
+                super::Token::Operator("*".to_string()),
+                super::Token::Value("3".to_string()),
             ]
         );
     }
@@ -110,13 +119,13 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("1".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Parenthesis("(".to_string()),
-                super::TokenType::Value("2".to_string()),
-                super::TokenType::Operator("*".to_string()),
-                super::TokenType::Value("3".to_string()),
-                super::TokenType::Parenthesis(")".to_string()),
+                super::Token::Value("1".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Parenthesis("(".to_string()),
+                super::Token::Value("2".to_string()),
+                super::Token::Operator("*".to_string()),
+                super::Token::Value("3".to_string()),
+                super::Token::Parenthesis(")".to_string()),
             ]
         );
     }
@@ -129,17 +138,17 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("1".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Parenthesis("(".to_string()),
-                super::TokenType::Value("2".to_string()),
-                super::TokenType::Operator("*".to_string()),
-                super::TokenType::Parenthesis("(".to_string()),
-                super::TokenType::Value("3".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Value("4".to_string()),
-                super::TokenType::Parenthesis(")".to_string()),
-                super::TokenType::Parenthesis(")".to_string()),
+                super::Token::Value("1".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Parenthesis("(".to_string()),
+                super::Token::Value("2".to_string()),
+                super::Token::Operator("*".to_string()),
+                super::Token::Parenthesis("(".to_string()),
+                super::Token::Value("3".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Value("4".to_string()),
+                super::Token::Parenthesis(")".to_string()),
+                super::Token::Parenthesis(")".to_string()),
             ]
         );
     }
@@ -152,12 +161,12 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("x".to_string()),
-                super::TokenType::Operator("||".to_string()),
-                super::TokenType::Parenthesis("(".to_string()),
-                super::TokenType::Value("y".to_string()),
-                super::TokenType::Operator("||".to_string()),
-                super::TokenType::Value("z".to_string()),
+                super::Token::Value("x".to_string()),
+                super::Token::Operator("||".to_string()),
+                super::Token::Parenthesis("(".to_string()),
+                super::Token::Value("y".to_string()),
+                super::Token::Operator("||".to_string()),
+                super::Token::Value("z".to_string()),
             ]
         );
     }
@@ -170,10 +179,10 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("1".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Value("2".to_string()),
-                super::TokenType::Value("x".to_string()),
+                super::Token::Value("1".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Value("2".to_string()),
+                super::Token::Value("x".to_string()),
             ]
         );
     }
@@ -186,9 +195,9 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("2x".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Value("b".to_string()),
+                super::Token::Value("2x".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Value("b".to_string()),
             ]
         );
     }
@@ -201,9 +210,9 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("x.property".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Value("1".to_string()),
+                super::Token::Value("x.property".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Value("1".to_string()),
             ]
         );
     }
@@ -216,25 +225,25 @@ mod tests {
         assert_eq!(
             result,
             vec![
-                super::TokenType::Value("1".to_string()),
-                super::TokenType::Operator("+".to_string()),
-                super::TokenType::Value("2".to_string()),
-                super::TokenType::Operator("/".to_string()),
-                super::TokenType::Value("3".to_string()),
-                super::TokenType::Operator("/".to_string()),
-                super::TokenType::Parenthesis("(".to_string()),
-                super::TokenType::Value("4".to_string()),
-                super::TokenType::Operator("/".to_string()),
-                super::TokenType::Value("5".to_string()),
-                super::TokenType::Operator("*".to_string()),
-                super::TokenType::Value("6".to_string()),
-                super::TokenType::Operator("*".to_string()),
-                super::TokenType::Value("3".to_string()),
-                super::TokenType::Parenthesis(")".to_string()),
-                super::TokenType::Operator("*".to_string()),
-                super::TokenType::Value("0.1".to_string()),
-                super::TokenType::Operator("/".to_string()),
-                super::TokenType::Value("2".to_string()),
+                super::Token::Value("1".to_string()),
+                super::Token::Operator("+".to_string()),
+                super::Token::Value("2".to_string()),
+                super::Token::Operator("/".to_string()),
+                super::Token::Value("3".to_string()),
+                super::Token::Operator("/".to_string()),
+                super::Token::Parenthesis("(".to_string()),
+                super::Token::Value("4".to_string()),
+                super::Token::Operator("/".to_string()),
+                super::Token::Value("5".to_string()),
+                super::Token::Operator("*".to_string()),
+                super::Token::Value("6".to_string()),
+                super::Token::Operator("*".to_string()),
+                super::Token::Value("3".to_string()),
+                super::Token::Parenthesis(")".to_string()),
+                super::Token::Operator("*".to_string()),
+                super::Token::Value("0.1".to_string()),
+                super::Token::Operator("/".to_string()),
+                super::Token::Value("2".to_string()),
             ]
         );
     }

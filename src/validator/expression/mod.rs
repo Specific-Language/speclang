@@ -18,35 +18,29 @@ pub enum ExpressionType {
     Unknown
 }
 
-fn identify_expression_type(value: &str, context: &HashMap<String, Value>) -> ExpressionType {
-    match primitive::validate(value) {
-        Ok(()) => return ExpressionType::Primitive,
-        _ => (),
-    }
-    match reference::validate(value, context) {
-        Ok(()) => return ExpressionType::Reference,
-        _ => (),
-    }
-    match logic::validate(value, context) {
-        Ok(()) => return ExpressionType::Logic,
-        _ => (),
-    }
-    match math::validate(value, context) {
-        Ok(()) => return ExpressionType::Math,
-        _ => (),
-    }
-    ExpressionType::Unknown
-}
-
 pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), ValidationError> {
-    match identify_expression_type(value, context) {
+    let identify_expression_type = || -> ExpressionType {
+        if primitive::validate(value).is_ok() {
+            return ExpressionType::Primitive;
+        }
+        if reference::validate(value, context).is_ok() {
+            return ExpressionType::Reference;
+        }
+        if logic::validate(value, context).is_ok() {
+            return ExpressionType::Logic;
+        }
+        if math::validate(value, context).is_ok() {
+            return ExpressionType::Math;
+        }
+        ExpressionType::Unknown
+    };
+
+    match identify_expression_type() {
         ExpressionType::Primitive
-            | ExpressionType::Math
-            | ExpressionType::Logic
-            | ExpressionType::Reference => {
-            return Ok(());
-        },
-        ExpressionType::Unknown => Err(ValidationError::InvalidExpression)
+        | ExpressionType::Math
+        | ExpressionType::Logic
+        | ExpressionType::Reference => Ok(()),
+        ExpressionType::Unknown => Err(ValidationError::InvalidExpression),
     }
 }
 
@@ -55,4 +49,9 @@ pub fn find(input: &str) -> Vec<String> {
     re.captures_iter(input)
         .map(|cap| cap[1].to_string())
         .collect()
+}
+
+pub fn fail(message: &str) -> Result<(), ValidationError> {
+    println!("Debug: {}", message);
+    Err(ValidationError::InvalidExpressionSyntax(message.to_string()))
 }
