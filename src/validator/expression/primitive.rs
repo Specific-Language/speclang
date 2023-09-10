@@ -8,4 +8,3 @@ pub fn validate(value: &str) -> Result<(), ValidationError> {
     }
     Err(ValidationError::InvalidValue)
 }
-

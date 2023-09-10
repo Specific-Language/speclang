@@ -67,6 +67,7 @@ fn collect_fragment(chars: &mut Peekable<Chars>, current_char: char, operators: 
     fragment
 }
 
+#[cfg(test)]
 mod tests {    
     #[test]
     fn simple() {

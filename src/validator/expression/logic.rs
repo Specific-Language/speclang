@@ -68,6 +68,7 @@ pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), Val
     Ok(())
 }
 
+#[cfg(test)]
 mod tests {
     use std::collections::HashMap;
     use serde_json::{Value, json};

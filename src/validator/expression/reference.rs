@@ -12,4 +12,3 @@ pub fn validate(reference: &str, context: &HashMap<String, Value>) -> Result<(),
         }
     }
 }
-

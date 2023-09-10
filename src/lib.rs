@@ -1,17 +1,25 @@
-// pub mod types;
 pub mod parser;
 pub mod validator;
-// pub mod generator;
-// pub mod utils;
 
-// #[wasm_bindgen::prelude::wasm_bindgen]
-// pub fn define_str(name: &str, spec: &str) {
-// //   define(&mut node, name, spec);
-// //   println!("{}", node);
-// }
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn parse(input: &str) -> String {
+  let result = parser::parse(input);
+  result.to_string()
+}
 
-// #[wasm_bindgen::prelude::wasm_bindgen]
-// pub fn parse_str(spec: &str) -> String {
-// //   let output = parse(spec);
-// //   serde_json::to_string_pretty(&output).unwrap()
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::*;
+    
+    #[test]
+    fn assignment() {
+        let input = r#"x = "string""#;
+        let serialized = parse(input);
+        let deserialized: Value = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(
+            deserialized,
+            json!({"x": "string"})
+        );
+    }
+}
