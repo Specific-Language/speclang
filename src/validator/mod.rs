@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use serde_json::Value;
+use serde_json::{Value, Map};
 
 pub mod expression;
 
@@ -14,7 +12,7 @@ pub enum ValidationError {
     InvalidExpressionSyntax(String)
 }
 
-pub fn validate(parsed: &Value, context: &mut HashMap<String, Value>) -> Result<(), ValidationError> {
+pub fn validate(parsed: &Value, context: &mut Map<String, Value>) -> Result<(), ValidationError> {
     match parsed {
         Value::String(string) => {
             let expressions = expression::find(string);

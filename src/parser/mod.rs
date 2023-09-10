@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-use serde_json::Value;
+use serde_json::{Value, Map};
 
 use crate::validator::validate;
 
-pub fn parse_with_context(input: &str, context: &mut HashMap<String, Value>) -> Value {
+pub fn parse_with_context(input: &str, context: &mut Map<String, Value>) -> Value {
   let result = hcl::from_str(input);
   let parsed_input: Value = match result {
     Ok(value) => value,
@@ -14,7 +13,7 @@ pub fn parse_with_context(input: &str, context: &mut HashMap<String, Value>) -> 
 }
 
 pub fn parse(input: &str) -> Value {
-  let mut context: HashMap<String, Value> = HashMap::new();
+  let mut context: Map<String, Value> = Map::new();
   parse_with_context(input, &mut context)
 }
 
@@ -115,7 +114,7 @@ mod tests {
     #[test]
     fn expression() {
       let input = r#"x = y + 2"#;
-      let mut context: HashMap<String, Value> = HashMap::new();
+      let mut context: Map<String, Value> = Map::new();
       context.insert("y".to_owned(), json!(5));
       let result = parse_with_context(input, &mut context);
       assert_eq!(

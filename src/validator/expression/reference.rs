@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-use serde_json::Value;
+use serde_json::{Value, Map};
 use crate::validator::ValidationError;
 
-pub fn validate(reference: &str, context: &HashMap<String, Value>) -> Result<(), ValidationError> {
+pub fn validate(reference: &str, context: &Map<String, Value>) -> Result<(), ValidationError> {
     println!("reference::validate {}", reference);
     match reference {
         "string" | "number" | "bool" | "list" | "map" => Ok(()),

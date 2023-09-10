@@ -1,59 +1,29 @@
-use std::collections::{HashSet, HashMap};
-use serde_json::Value;
-use crate::validator::{ValidationError, expression::{tokenizer::{self, Token}, fail}};
+use serde_json::{Value, Map};
+use crate::validator::{ValidationError, expression::{tokenizer::{self, Token, Operator, LogicOp}, fail}};
 use super::reference;
 
-const LOGICAL_AND: &str = "&&";
-const LOGICAL_OR: &str = "||";
-const LOGICAL_NOT: &str = "!";
-const LOGIC_OPERATORS: [&str; 3] = [LOGICAL_AND, LOGICAL_OR, LOGICAL_NOT];
-
-pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), ValidationError> {
+pub fn validate(value: &str, context: &Map<String, Value>) -> Result<(), ValidationError> {
     println!("logic::validate {}", value);
-
-    let operators: HashSet<_> = LOGIC_OPERATORS.iter().cloned().collect();
-    let tokens = tokenizer::tokenize(value, &operators);
 
     let mut open_parentheses_count = 0;
     let mut last_token: Option<&Token> = None;
 
+    let tokens = tokenizer::tokenize(value);
     for token in &tokens {
-        if let Token::Operator(op) = token {
-            if op == LOGICAL_NOT {
-                match last_token {
-                    Some(Token::Value(_)) => return fail("Unexpected negation operator after a value"),
-                    Some(Token::CloseParenthesis) => return fail("Unexpected negation operator after a close parenthesis"),
-                    _ => {}
-                }
-            } else {
-                match last_token {
-                    None => return fail("Expression starts with a binary operator"),
-                    Some(Token::Operator(_)) => return fail("Operator after another operator"),
-                    Some(Token::OpenParenthesis) => return fail("Operator after an open parenthesis"),
-                    _ => {}
+        match detect_sequence_error(last_token, token, context) {
+            Some(error) => return fail(error),
+            None => {}
+        }
+        match token {
+            Token::OpenParenthesis => open_parentheses_count += 1,
+            Token::CloseParenthesis => {
+                open_parentheses_count -= 1;
+                if open_parentheses_count < 0 {
+                    return fail("Close parenthesis but none were open");
                 }
             }
+            _ => {}
         }
-
-        if let Token::Value(value_token) = token {
-            match last_token {
-                Some(Token::Value(_)) => return fail("Value after another value"),
-                Some(Token::CloseParenthesis) => return fail("Value after a close parenthesis"),
-                _ => {}
-            }
-            match serde_json::from_str::<serde_json::Value>(value_token) {
-                Ok(_) => {},
-                Err(_) => reference::validate(value_token, context)?,
-            }
-        } else if token == &Token::OpenParenthesis {
-            open_parentheses_count += 1;
-        } else if token == &Token::CloseParenthesis {
-            open_parentheses_count -= 1;
-            if open_parentheses_count < 0 {
-                return fail("Close parenthesis but none were open");
-            }
-        }
-
         last_token = Some(token);
     }
 
@@ -68,15 +38,50 @@ pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), Val
     Ok(())
 }
 
+fn detect_sequence_error(last_token: Option<&Token>, token: &Token, context: &Map<String, Value>) -> Option<&'static str> {
+    match (last_token, token) {
+        // Logic::Not
+        (None, Token::Operator(Operator::Logic(LogicOp::Not)))
+            => None, 
+        (Some(Token::Operator(Operator::Logic(_))), Token::Operator(Operator::Logic(LogicOp::Not))) 
+            => None,
+        (Some(Token::Value(_)), Token::Operator(Operator::Logic(LogicOp::Not))) 
+            => Some("Unexpected Logic::Not operator after a value"),
+        (Some(Token::Operator(Operator::Math(_))), Token::Operator(Operator::Logic(LogicOp::Not))) 
+            => Some("Unexpected Logic::Not operator after a Math operator"),
+
+        // Other operators
+        (None, Token::Operator(_)) 
+            => Some("Expression starts with a binary operator"),
+        (Some(Token::Operator(_)), Token::Operator(_)) 
+            => Some("Operator after another operator"),
+        (Some(Token::OpenParenthesis), Token::Operator(_)) 
+            => Some("Operator after an open parenthesis"),
+        (Some(Token::Value(_)), Token::Value(_)) 
+            => Some("Value after another value"),
+        (Some(Token::CloseParenthesis), Token::Value(_)) 
+            => Some("Value after a close parenthesis"),
+        (_, Token::Value(value_token)) => {
+            match serde_json::from_str::<serde_json::Value>(value_token) {
+                Ok(_) => None,
+                Err(_) => {
+                    reference::validate(value_token, context).ok();
+                    None
+                }
+            }
+        },
+        _ => None
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-    use serde_json::{Value, json};
+    use serde_json::{Value, Map, json};
 
     #[test]
     fn intersection() {
         let input = r#"x && y"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         let result = super::validate(input, &context);
@@ -87,7 +92,7 @@ mod tests {
     #[test]
     fn union() {
         let input = r#"x || y"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         let result = super::validate(input, &context);
@@ -98,7 +103,7 @@ mod tests {
     #[test]
     fn negation() {
         let input = r#"!x"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         let result = super::validate(input, &context);
         println!("result {:?}", result);
@@ -108,7 +113,7 @@ mod tests {
     #[test]
     fn parentheses() {
         let input = r#"(x || y)"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         let result = super::validate(input, &context);
@@ -119,7 +124,7 @@ mod tests {
     #[test]
     fn invalid_beginning() {
         let input = r#"&& x || y"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         let result = super::validate(input, &context);
@@ -130,7 +135,7 @@ mod tests {
     #[test]
     fn invalid_ending() {
         let input = r#"x && y ||"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         let result = super::validate(input, &context);
@@ -141,7 +146,7 @@ mod tests {
     #[test]
     fn invalid_parentheses() {
         let input = r#"x || (y && z"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         context.insert("z".to_owned(), json!(true));
@@ -153,7 +158,7 @@ mod tests {
     #[test]
     fn invalid_parentheses_2() {
         let input = r#"x || y) || z"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         context.insert("z".to_owned(), json!(true));
@@ -165,7 +170,7 @@ mod tests {
     #[test]
     fn complex_expression() {
         let input = r#"x && y || z && !a"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         context.insert("z".to_owned(), json!(true));
@@ -178,7 +183,7 @@ mod tests {
     #[test]
     fn ultra_complex_expression() {
         let input = r#"x && y || (z && !a || (b && c)) || (d && e) || f"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!(true));
         context.insert("y".to_owned(), json!(false));
         context.insert("z".to_owned(), json!(true));
@@ -196,7 +201,7 @@ mod tests {
     #[test]
     fn reference_property() {
         let input = r#"x.property && y"#;
-        let mut context: HashMap<String, Value> = HashMap::new();
+        let mut context: Map<String, Value> = Map::new();
         context.insert("x".to_owned(), json!({}));
         context.insert("x.property".to_owned(), json!(false));
         context.insert("y".to_owned(), json!(true));

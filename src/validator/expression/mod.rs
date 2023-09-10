@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use serde_json::Value;
+use serde_json::{Value, Map};
 use regex::Regex;
 
 use crate::validator::ValidationError;
@@ -18,7 +17,7 @@ pub enum ExpressionType {
     Unknown
 }
 
-pub fn validate(value: &str, context: &HashMap<String, Value>) -> Result<(), ValidationError> {
+pub fn validate(value: &str, context: &Map<String, Value>) -> Result<(), ValidationError> {
     let identify_expression = || -> ExpressionType {
         if primitive::validate(value).is_ok() {
             return ExpressionType::Primitive;
