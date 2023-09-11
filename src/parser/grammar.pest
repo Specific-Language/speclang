@@ -1,0 +1,21 @@
+expression = { unary_expr | non_recursive_expr }
+
+group = { "(" ~ expression ~ ")" }
+bool = @{ "true" | "false" }
+number = @{ ("-"? ~ ASCII_DIGIT+) ~ ("." ~ ASCII_DIGIT+)? }
+value = _{ bool | number }
+reference_part = @{ ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)* }
+reference = @{ reference_part ~ ("." ~ reference_part)* }
+
+unary_op = { "!" }
+math_op = { "+" | "-" | "*" | "/" | "%" | "^" }
+logic_op = { "&&" | "||" | "<=" | ">=" | "==" | "<" | ">" }
+binary_op = _{ math_op | logic_op }
+unary_expr = { unary_op ~ atomic }
+
+non_recursive_expr = _{ atomic ~ binary_operation* }
+binary_operation = { binary_op ~ atomic }
+
+atomic = _{ group | value | reference }
+
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }

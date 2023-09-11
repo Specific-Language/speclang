@@ -3,49 +3,33 @@ use regex::Regex;
 
 use crate::validator::ValidationError;
 
-pub mod tokenizer;
+// pub mod tokenizer;
 pub mod primitive;
 pub mod reference;
 pub mod logic;
 pub mod math;
 
-pub enum ExpressionType {
-    Primitive,
-    Math,
-    Logic,
-    Reference,
-    Unknown
-}
+pub type ValidationFn = fn(&str, &Map<String, Value>) -> Result<(), ValidationError>;
 
 pub fn validate(value: &str, context: &Map<String, Value>) -> Result<(), ValidationError> {
-    let identify_expression = || -> ExpressionType {
-        if primitive::validate(value).is_ok() {
-            return ExpressionType::Primitive;
-        }
-        if reference::validate(value, context).is_ok() {
-            return ExpressionType::Reference;
-        }
-        if logic::validate(value, context).is_ok() {
-            return ExpressionType::Logic;
-        }
-        if math::validate(value, context).is_ok() {
-            return ExpressionType::Math;
-        }
-        ExpressionType::Unknown
-    };
+    let validation_functions: &[ValidationFn] = &[
+        primitive::validate,
+        reference::validate,
+        logic::validate,
+        math::validate
+    ];    
 
-    match identify_expression() {
-        | ExpressionType::Primitive
-        | ExpressionType::Math
-        | ExpressionType::Logic
-        | ExpressionType::Reference
-            => Ok(()),
-        | ExpressionType::Unknown
-            => Err(ValidationError::InvalidExpression),
+    for validate_fn in validation_functions {
+        if validate_fn(value, context).is_ok() {
+            return Ok(());
+        }
     }
+
+    Err(ValidationError::InvalidExpression)
 }
 
 pub fn find(input: &str) -> Vec<String> {
+    // where does this belong?
     let re = Regex::new(r"\$\{([^\}]+)\}").unwrap();
     re.captures_iter(input)
         .map(|cap| cap[1].to_string())

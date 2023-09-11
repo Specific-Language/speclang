@@ -1,6 +1,7 @@
 use serde_json::{Value, Map};
 
-use crate::validator::validate;
+pub mod pest;
+pub mod specific;
 
 pub fn parse_with_context(input: &str, context: &mut Map<String, Value>) -> Value {
   let result = hcl::from_str(input);
@@ -8,7 +9,8 @@ pub fn parse_with_context(input: &str, context: &mut Map<String, Value>) -> Valu
     Ok(value) => value,
     Err(error) => panic!("parser::parse error {}", &error.to_string()),
   };
-  validate(&parsed_input, context).expect("validator::validate error");
+  // pest
+  // validate(&parsed_input, context).expect("validator::validate error");
   parsed_input.to_owned()
 }
 

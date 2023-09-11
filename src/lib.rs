@@ -1,8 +1,8 @@
 use serde_json::*;
 
 pub mod parser;
-pub mod validator;
-pub mod evaluator;
+// pub mod validator;
+// pub mod evaluator;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn parse(input: &str) -> String {

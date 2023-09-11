@@ -1,22 +1,13 @@
+use serde_json::Value;
 use std::iter::Peekable;
 use std::str::Chars;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
-    Value(String),
+    Value(Value),
     Operator(Operator),
     OpenParenthesis,
     CloseParenthesis,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum Expression {
-    Number(f64),
-    Boolean(bool),
-    String(String), // is this used?
-    Reference(String),
-    Math(Box<Expression>, MathOp, Box<Expression>),
-    Logic(Box<Expression>, LogicOp, Box<Expression>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -40,6 +31,16 @@ pub enum LogicOp {
     And,
     Or,
     Not,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Expression {
+    Number(f64),
+    Boolean(bool),
+    String(String), // is this used?
+    Reference(String),
+    Math(Box<Expression>, MathOp, Box<Expression>),
+    Logic(Box<Expression>, LogicOp, Box<Expression>),
 }
 
 const OPERATOR_MAPPINGS: &[( &str, Token )] = &[
@@ -93,7 +94,7 @@ pub fn tokenize(expression: &str) -> Vec<Token> {
 
 fn collect_value(value: &mut String, tokens: &mut Vec<Token>) {
     if !value.is_empty() {
-        tokens.push(Token::Value(std::mem::take(value)));
+        tokens.push(Token::Value(serde_json::json!(value)));
     }
 }
 
