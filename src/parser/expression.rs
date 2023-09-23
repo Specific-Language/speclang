@@ -76,13 +76,17 @@ impl Computed {
                 let mut unary_op = None;
                 let mut expr = None;
                 for child in inner {
-                    match child.as_rule() {
-                        Rule::UNARY_OP => unary_op = Some(child.as_str().to_string()),
-                        _ => expr = Some(Self::from_pair(child)),
+                    if let Rule::UNARY_OP = child.as_rule() {
+                        unary_op = Some(child.as_str().to_string());
+                    } else {
+                        expr = Some(Self::from_pair(child));
                     }
-                }
+                }            
                 match unary_op {
-                    Some(op) => Computed::Unary(UnaryOp::from_str(&op).unwrap(), Box::new(expr.unwrap())),
+                    Some(op) => Computed::Unary(
+                        UnaryOp::from_str(&op).unwrap(),
+                        Box::new(expr.unwrap())
+                    ),
                     None => expr.unwrap(),
                 }
             }
@@ -154,7 +158,7 @@ impl Computed {
         right_val: Specific,
     ) -> Result<Specific, &'static str> {
         match op {
-            BinaryOp::MathAdd
+            | BinaryOp::MathAdd
             | BinaryOp::MathSubtract
             | BinaryOp::MathMultiply
             | BinaryOp::MathDivide

@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use serde_json::Map;
 use serde_json::Value;
-use crate::parser::expression::Specific;
 use crate::parser::expression::Computed;
 
 pub struct Context {
@@ -46,7 +45,8 @@ impl Context {
 #[cfg(test)]
 mod tests {
   use super::*;
-
+    use crate::parser::expression::Specific;
+    
     #[test]
     fn test_variables() {
         let expression = Computed::from("${a + b}").unwrap();
