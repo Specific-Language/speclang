@@ -44,12 +44,14 @@ impl BinaryOp {
 #[derive(Debug, Clone)]
 pub enum UnaryOp {
     LogicNot,
+    MathNegative,
 }
 
 impl UnaryOp {
     pub fn from_str(s: &str) -> Result<Self, &'static str> {
         match s {
             "!" => Ok(UnaryOp::LogicNot),
+            "-" => Ok(UnaryOp::MathNegative),
             _ => Err("Unexpected unary operator"),
         }
     }

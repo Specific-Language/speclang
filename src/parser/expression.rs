@@ -7,39 +7,39 @@ pub struct ExpressionParser;
 
 #[derive(Debug, Clone)]
 pub enum TemplateItem {
-    Interpolated(Computed),
+    Interpolated(Expression),
     Literal(String),
 }
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum Specific {
+pub enum Static {
     Number(f64),
     String(String),
     Bool(bool),
 }
 
-impl Specific {
+impl Static {
     pub fn to_string(&self) -> String {
         match self {
-            Specific::String(s) => s.clone(),
-            Specific::Bool(b) => b.to_string(),
-            Specific::Number(n) => n.to_string(),
+            Static::String(s) => s.clone(),
+            Static::Bool(b) => b.to_string(),
+            Static::Number(n) => n.to_string(),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum Computed {
-    Unary(UnaryOp, Box<Computed>),
-    Binary(Box<Computed>, BinaryOp, Box<Computed>),
-    Literal(Specific),
+pub enum Expression {
+    Unary(UnaryOp, Box<Expression>),
+    Binary(Box<Expression>, BinaryOp, Box<Expression>),
+    Literal(Static),
     Reference(String),
-    Group(Box<Computed>),
+    Group(Box<Expression>),
     Template(Vec<TemplateItem>),
-    Interpolated(Box<Computed>),
+    Interpolated(Box<Expression>),
 }
 
-impl Computed {
+impl Expression {
     pub fn from(input: &str) -> Result<Self, pest::error::Error<Rule>> {
         let mut parsed = ExpressionParser::parse(Rule::TEMPLATE, input)?;
         Ok(Self::from_pair(parsed.next().unwrap()))
@@ -49,21 +49,21 @@ impl Computed {
         match pair.as_rule() {
             Rule::TEMPLATE => {
                 let items = pair.into_inner().map(|p| TemplateItem::Interpolated(Self::from_pair(p))).collect();
-                Computed::Template(items)
+                Expression::Template(items)
             }
             Rule::INTERPOLATED => {
                 let inner = pair.into_inner().next().unwrap();
-                Computed::Interpolated(Box::new(Self::from_pair(inner)))
+                Expression::Interpolated(Box::new(Self::from_pair(inner)))
             }
-            Rule::NUMBER => Computed::Literal(Specific::Number(pair.as_str().parse().unwrap())),
-            Rule::BOOL => Computed::Literal(Specific::Bool(pair.as_str() == "true")),
-            Rule::STRING => Computed::Literal(Specific::String(pair.as_str().to_string())),
+            Rule::NUMBER => Expression::Literal(Static::Number(pair.as_str().parse().unwrap())),
+            Rule::BOOL => Expression::Literal(Static::Bool(pair.as_str() == "true")),
+            Rule::STRING => Expression::Literal(Static::String(pair.as_str().to_string())),
             Rule::LOGIC | Rule::COMPARE | Rule::MATH | Rule::MULTIPLY | Rule::EXPONENT => {
                 let mut inner = pair.into_inner();
                 let mut left = Self::from_pair(inner.next().unwrap());
                 while let Some(op) = inner.next() {
                     let right = Self::from_pair(inner.next().unwrap());
-                    left = Computed::Binary(
+                    left = Expression::Binary(
                         Box::new(left),
                         BinaryOp::from_str(op.as_str()).unwrap(),
                         Box::new(right),
@@ -83,7 +83,7 @@ impl Computed {
                     }
                 }            
                 match unary_op {
-                    Some(op) => Computed::Unary(
+                    Some(op) => Expression::Unary(
                         UnaryOp::from_str(&op).unwrap(),
                         Box::new(expr.unwrap())
                     ),
@@ -92,36 +92,36 @@ impl Computed {
             }
             Rule::REFERENCE => {
                 match pair.as_str() {
-                    "true" => Computed::Literal(Specific::Bool(true)),
-                    "false" => Computed::Literal(Specific::Bool(false)),
-                    _ => Computed::Reference(pair.as_str().to_string()),
+                    "true" => Expression::Literal(Static::Bool(true)),
+                    "false" => Expression::Literal(Static::Bool(false)),
+                    _ => Expression::Reference(pair.as_str().to_string()),
                 }
             }
             Rule::GROUP => {
                 let inner = pair.into_inner().next().unwrap();
-                Computed::Group(Box::new(Self::from_pair(inner)))
+                Expression::Group(Box::new(Self::from_pair(inner)))
             }
             _ => panic!("Unknown rule: {:?}", pair.as_rule()),
         }
     }
 
-    pub fn eval(&self, context: &crate::parser::Context) -> Result<Specific, &'static str> {
+    pub fn eval(&self, context: &crate::parser::Context) -> Result<Static, &'static str> {
         match self {
-            Computed::Unary(op, expr) => {
+            Expression::Unary(op, expr) => {
                 let val = expr.eval(context)?;
                 Self::eval_unary_operation(op, val)
             }
-            Computed::Binary(left, op, right) => {
+            Expression::Binary(left, op, right) => {
                 let left_val = left.eval(context)?;
                 let right_val = right.eval(context)?;
                 Self::eval_binary_operation(op, left_val, right_val)
             }
-            Computed::Literal(val) => Ok(val.clone()),
-            Computed::Reference(name) => {
+            Expression::Literal(val) => Ok(val.clone()),
+            Expression::Reference(name) => {
                 let expr = context.get(name).ok_or("Variable not found in context")?;
                 expr.eval(context)
             }
-            Computed::Template(items) => {
+            Expression::Template(items) => {
                 if items.len() == 1 {
                     if let TemplateItem::Interpolated(expr) = &items[0] {
                         return expr.eval(context);
@@ -137,26 +137,30 @@ impl Computed {
                         }
                     }
                 }
-                Ok(Specific::String(result))
+                Ok(Static::String(result))
             },
             _ => unreachable!(),
         }
     }
 
-    fn eval_unary_operation(op: &UnaryOp, val: Specific) -> Result<Specific, &'static str> {
+    fn eval_unary_operation(op: &UnaryOp, val: Static) -> Result<Static, &'static str> {
         match op {
             UnaryOp::LogicNot => match val {
-                Specific::Bool(b) => Ok(Specific::Bool(!b)),
+                Static::Bool(b) => Ok(Static::Bool(!b)),
                 _ => Err("Invalid type for NOT operation"),
+            },
+            UnaryOp::MathNegative => match val {
+                Static::Number(n) => Ok(Static::Number(-n)),
+                _ => Err("Invalid type for negative operation"),
             },
         }
     }
 
     fn eval_binary_operation(
         op: &BinaryOp,
-        left_val: Specific,
-        right_val: Specific,
-    ) -> Result<Specific, &'static str> {
+        left_val: Static,
+        right_val: Static,
+    ) -> Result<Static, &'static str> {
         match op {
             | BinaryOp::MathAdd
             | BinaryOp::MathSubtract
@@ -164,41 +168,41 @@ impl Computed {
             | BinaryOp::MathDivide
             | BinaryOp::MathModulus
             | BinaryOp::MathPower => match (left_val, right_val) {
-                (Specific::Number(l), Specific::Number(r)) => match op {
-                    BinaryOp::MathAdd => Ok(Specific::Number(l + r)),
-                    BinaryOp::MathSubtract => Ok(Specific::Number(l - r)),
-                    BinaryOp::MathMultiply => Ok(Specific::Number(l * r)),
+                (Static::Number(l), Static::Number(r)) => match op {
+                    BinaryOp::MathAdd => Ok(Static::Number(l + r)),
+                    BinaryOp::MathSubtract => Ok(Static::Number(l - r)),
+                    BinaryOp::MathMultiply => Ok(Static::Number(l * r)),
                     BinaryOp::MathDivide => {
                         if r == 0.0 {
                             Err("Division by zero")
                         } else {
-                            Ok(Specific::Number(l / r))
+                            Ok(Static::Number(l / r))
                         }
                     }
-                    BinaryOp::MathModulus => Ok(Specific::Number(l % r)),
-                    BinaryOp::MathPower => Ok(Specific::Number(l.powf(r))),
+                    BinaryOp::MathModulus => Ok(Static::Number(l % r)),
+                    BinaryOp::MathPower => Ok(Static::Number(l.powf(r))),
                     _ => unreachable!(),
                 },
                 _ => Err("Invalid operands for mathematical operation"),
             },
             BinaryOp::LogicAnd | BinaryOp::LogicOr => match (left_val, right_val) {
-                (Specific::Bool(l), Specific::Bool(r)) => match op {
-                    BinaryOp::LogicAnd => Ok(Specific::Bool(l && r)),
-                    BinaryOp::LogicOr => Ok(Specific::Bool(l || r)),
+                (Static::Bool(l), Static::Bool(r)) => match op {
+                    BinaryOp::LogicAnd => Ok(Static::Bool(l && r)),
+                    BinaryOp::LogicOr => Ok(Static::Bool(l || r)),
                     _ => unreachable!(),
                 },
                 _ => Err("Invalid operands for logical operation"),
             },
             BinaryOp::LogicComparison(comp_op) => match (left_val, right_val) {
-                (Specific::Number(l), Specific::Number(r)) => match comp_op {
-                    ComparisonOp::LessThan => Ok(Specific::Bool(l < r)),
-                    ComparisonOp::GreaterThan => Ok(Specific::Bool(l > r)),
-                    ComparisonOp::LessThanOrEqual => Ok(Specific::Bool(l <= r)),
-                    ComparisonOp::GreaterThanOrEqual => Ok(Specific::Bool(l >= r)),
-                    ComparisonOp::Equals => Ok(Specific::Bool((l - r).abs() < f64::EPSILON)),
+                (Static::Number(l), Static::Number(r)) => match comp_op {
+                    ComparisonOp::LessThan => Ok(Static::Bool(l < r)),
+                    ComparisonOp::GreaterThan => Ok(Static::Bool(l > r)),
+                    ComparisonOp::LessThanOrEqual => Ok(Static::Bool(l <= r)),
+                    ComparisonOp::GreaterThanOrEqual => Ok(Static::Bool(l >= r)),
+                    ComparisonOp::Equals => Ok(Static::Bool((l - r).abs() < f64::EPSILON)),
                 },
-                (Specific::Bool(l), Specific::Bool(r)) => match comp_op {
-                    ComparisonOp::Equals => Ok(Specific::Bool(l == r)),
+                (Static::Bool(l), Static::Bool(r)) => match comp_op {
+                    ComparisonOp::Equals => Ok(Static::Bool(l == r)),
                     _ => Err("Invalid comparison for booleans"),
                 },
                 _ => Err("Invalid operands for comparison operation"),
@@ -219,131 +223,131 @@ mod tests {
 
     #[test]
     fn test_bool() {
-        let expression = Computed::from("true").unwrap();
+        let expression = Expression::from("true").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(true));
+        assert_eq!(result, Static::Bool(true));
     }
 
     #[test]
     fn test_wrapped() {
-        let expression = Computed::from("${true}").unwrap();
+        let expression = Expression::from("${true}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(true));
+        assert_eq!(result, Static::Bool(true));
     }
 
     #[test]
     fn test_addition() {
-        let expression = Computed::from("${1 + 2}").unwrap();
+        let expression = Expression::from("${1 + 2}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(3.0));
+        assert_eq!(result, Static::Number(3.0));
     }
 
     #[test]
     fn test_addition_complex() {
-        let expression = Computed::from("${1 + 2 + 3}").unwrap();
+        let expression = Expression::from("${1 + 2 + 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(6.0));
+        assert_eq!(result, Static::Number(6.0));
     }
 
     #[test]
     fn test_subtraction() {
-        let expression = Computed::from("${1 - 2 - 3}").unwrap();
+        let expression = Expression::from("${1 - 2 - 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(-4.0));
+        assert_eq!(result, Static::Number(-4.0));
     }
 
     #[test]
     fn test_multiplication() {
-        let expression = Computed::from("${1 * 2 * 3}").unwrap();
+        let expression = Expression::from("${1 * 2 * 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(6.0));
+        assert_eq!(result, Static::Number(6.0));
     }
 
     #[test]
     fn test_division() {
-        let expression = Computed::from("${1 / 2}").unwrap();
+        let expression = Expression::from("${1 / 2}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(0.5));
+        assert_eq!(result, Static::Number(0.5));
     }
 
     #[test]
     fn test_modulus() {
-        let expression = Computed::from("${5 % 2 % 3}").unwrap();
+        let expression = Expression::from("${5 % 2 % 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(1.0));
+        assert_eq!(result, Static::Number(1.0));
     }
 
     #[test]
     fn test_power() {
-        let expression = Computed::from("${1 ^ 2 ^ 3}").unwrap();
+        let expression = Expression::from("${1 ^ 2 ^ 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(1.0));
+        assert_eq!(result, Static::Number(1.0));
     }
 
     #[test]
     fn test_and() {
-        let expression = Computed::from("${true && false && true}").unwrap();
+        let expression = Expression::from("${true && false && true}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(false));
+        assert_eq!(result, Static::Bool(false));
     }
 
     #[test]
     fn test_or() {
-        let expression = Computed::from("${true || false || true}").unwrap();
+        let expression = Expression::from("${true || false || true}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(true));
+        assert_eq!(result, Static::Bool(true));
     }
 
     #[test]
     fn test_less_than() {
-        let expression = Computed::from("${1 < 2}").unwrap();
+        let expression = Expression::from("${1 < 2}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(true));
+        assert_eq!(result, Static::Bool(true));
     }
 
     #[test]
     fn test_greater_than() {
-        let expression = Computed::from("${2 > 3}").unwrap();
+        let expression = Expression::from("${2 > 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(false));
+        assert_eq!(result, Static::Bool(false));
     }
 
     #[test]
     fn test_less_than_or_equal() {
-        let expression = Computed::from("${3 <= 3}").unwrap();
+        let expression = Expression::from("${3 <= 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(true));
+        assert_eq!(result, Static::Bool(true));
     }
 
     #[test]
     fn test_greater_than_or_equal() {
-        let expression = Computed::from("${2 >= 3}").unwrap();
+        let expression = Expression::from("${2 >= 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(false));
+        assert_eq!(result, Static::Bool(false));
     }
 
     #[test]
     fn test_equals() {
-        let expression = Computed::from("${1 == 2}").unwrap();
+        let expression = Expression::from("${1 == 2}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(false));
+        assert_eq!(result, Static::Bool(false));
 
-        let expression2 = Computed::from("${2 == 2}").unwrap();
+        let expression2 = Expression::from("${2 == 2}").unwrap();
         let result2 = expression2.eval(&CONTEXT).unwrap();
-        assert_eq!(result2, Specific::Bool(true));
+        assert_eq!(result2, Static::Bool(true));
     }
 
     #[test]
     fn test_not() {
-        let expression = Computed::from("${!true}").unwrap();
+        let expression = Expression::from("${!true}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Bool(false));
+        assert_eq!(result, Static::Bool(false));
     }
 
     #[test]
     fn test_parentheses() {
-        let expression = Computed::from("${(1 + 2) * 3}").unwrap();
+        let expression = Expression::from("${(1 + 2) * 3}").unwrap();
         let result = expression.eval(&CONTEXT).unwrap();
-        assert_eq!(result, Specific::Number(9.0));
+        assert_eq!(result, Static::Number(9.0));
     }
 }
