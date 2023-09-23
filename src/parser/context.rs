@@ -1,26 +1,41 @@
-use std::collections::BTreeMap;
+use crate::parser::expression::Expression;
 use serde_json::Map;
 use serde_json::Value;
-use crate::parser::expression::Expression;
+use std::collections::BTreeMap;
 
 pub struct Context {
-    map: Map<String, Value>,
     tree: BTreeMap<String, Expression>,
 }
 
 impl Context {
     pub fn new() -> Self {
         Context {
-            map: Map::new(),
             tree: BTreeMap::new(),
         }
     }
 
     pub fn from(map: Map<String, Value>) -> Self {
-      Context {
-          map,
-          tree: BTreeMap::new(), // construct tree too?
-      }
+        // flattens the map into a string->expression tree
+        // todo : objects and arrays
+        let mut tree = BTreeMap::new();
+        for (key, value) in map {
+            match value {
+                Value::String(s) => {
+                    let expr = Expression::from(s.as_str()).unwrap();
+                    tree.insert(key, expr);
+                },
+                Value::Number(n) => {
+                    let expr = Expression::from(n.to_string().as_str()).unwrap();
+                    tree.insert(key, expr);
+                },
+                Value::Bool(b) => {
+                    let expr = Expression::from(b.to_string().as_str()).unwrap();
+                    tree.insert(key, expr);
+                },
+                _ => panic!("Unexpected value type in context map")
+            }
+        }
+        Context { tree }
     }
 
     pub fn get(&self, name: &str) -> Option<&Expression> {
@@ -36,9 +51,9 @@ impl Context {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+    use super::*;
     use crate::parser::expression::Static;
-    
+
     #[test]
     fn test_variables() {
         let expression = Expression::from("${a + b}").unwrap();
@@ -56,7 +71,6 @@ mod tests {
     #[test]
     fn test_new_context() {
         let context = Context::new();
-        assert_eq!(context.map.len(), 0);
         assert_eq!(context.tree.len(), 0);
     }
 
@@ -66,8 +80,7 @@ mod tests {
         map.insert("a".to_owned(), serde_json::json!(1));
         map.insert("b".to_owned(), serde_json::json!(2));
         let context = Context::from(map);
-        assert_eq!(context.map.len(), 2);
-        assert_eq!(context.tree.len(), 0);
+        assert_eq!(context.tree.len(), 2);
     }
 
     #[test]
