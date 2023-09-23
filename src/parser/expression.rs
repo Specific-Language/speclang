@@ -134,9 +134,8 @@ impl Computed {
                     }
                 }
                 Ok(Specific::String(result))
-            }
-            Computed::Group(expr) => expr.eval(context),
-            Computed::Interpolated(expr) => expr.eval(context),
+            },
+            _ => unreachable!(),
         }
     }
 
