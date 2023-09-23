@@ -216,131 +216,131 @@ mod tests {
 
     #[test]
     fn test_bool() {
-        let expression = "true";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("true").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(true));
     }
 
     #[test]
     fn test_wrapped() {
-        let expression = "${true}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${true}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(true));
     }
 
     #[test]
     fn test_addition() {
-        let expression = "${1 + 2}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 + 2}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(3.0));
     }
 
     #[test]
     fn test_addition_complex() {
-        let expression = "${1 + 2 + 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 + 2 + 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(6.0));
     }
 
     #[test]
     fn test_subtraction() {
-        let expression = "${1 - 2 - 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 - 2 - 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(-4.0));
     }
 
     #[test]
     fn test_multiplication() {
-        let expression = "${1 * 2 * 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 * 2 * 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(6.0));
     }
 
     #[test]
     fn test_division() {
-        let expression = "${1 / 2}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 / 2}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(0.5));
     }
 
     #[test]
     fn test_modulus() {
-        let expression = "${5 % 2 % 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${5 % 2 % 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(1.0));
     }
 
     #[test]
     fn test_power() {
-        let expression = "${1 ^ 2 ^ 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 ^ 2 ^ 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(1.0));
     }
 
     #[test]
     fn test_and() {
-        let expression = "${true && false && true}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${true && false && true}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(false));
     }
 
     #[test]
     fn test_or() {
-        let expression = "${true || false || true}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${true || false || true}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(true));
     }
 
     #[test]
     fn test_less_than() {
-        let expression = "${1 < 2}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 < 2}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(true));
     }
 
     #[test]
     fn test_greater_than() {
-        let expression = "${2 > 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${2 > 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(false));
     }
 
     #[test]
     fn test_less_than_or_equal() {
-        let expression = "${3 <= 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${3 <= 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(true));
     }
 
     #[test]
     fn test_greater_than_or_equal() {
-        let expression = "${2 >= 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${2 >= 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(false));
     }
 
     #[test]
     fn test_equals() {
-        let expression = "${1 == 2}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${1 == 2}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(false));
 
-        let expression2 = "${2 == 2}";
-        let result2 = CONTEXT.eval(expression2).unwrap();
+        let expression2 = Computed::from("${2 == 2}").unwrap();
+        let result2 = expression2.eval(&CONTEXT).unwrap();
         assert_eq!(result2, Specific::Bool(true));
     }
 
     #[test]
     fn test_not() {
-        let expression = "${!true}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${!true}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Bool(false));
     }
 
     #[test]
     fn test_parentheses() {
-        let expression = "${(1 + 2) * 3}";
-        let result = CONTEXT.eval(expression).unwrap();
+        let expression = Computed::from("${(1 + 2) * 3}").unwrap();
+        let result = expression.eval(&CONTEXT).unwrap();
         assert_eq!(result, Specific::Number(9.0));
     }
 }

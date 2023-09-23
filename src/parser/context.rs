@@ -24,21 +24,22 @@ impl Context {
       }
     }
 
-    pub fn get(&self, key: &str) -> Option<&Computed> {
-        self.tree.get(key)
+    pub fn get(&self, name: &str) -> Option<&Computed> {
+        self.tree.get(name)
     }
 
-    pub fn insert(&mut self, key: String, value: &str) -> Result<(), &'static str> {
+    pub fn set(&mut self, name: String, value: &str) -> Result<(), &'static str> {
         let expr = Computed::from(value).unwrap();
-        self.tree.insert(key, expr);
+        self.tree.insert(name, expr);
         Ok(())
     }
 
-    pub fn eval(&self, value: &str) -> Result<Specific, &'static str> {
-        let expr = Computed::from(value).unwrap();
-        let result = expr.eval(&self);
-        println!("Evaluated {} to {:?}", value, result);
-        result
+    pub fn to_map(&self) -> Map<String, Value> {
+        let mut map = Map::new();
+        for (key, value) in &self.map {
+            map.insert(key.to_owned(), value.to_owned());
+        }
+        map
     }
 }
 
@@ -48,11 +49,15 @@ mod tests {
 
     #[test]
     fn test_variables() {
-        let expression = "${a + b}";
+        let expression = Computed::from("${a + b}").unwrap();
         let mut context = Context::new();
-        context.insert("a".to_owned(), "1.0").unwrap();
-        context.insert("b".to_owned(), "2.0").unwrap();
-        let result = context.eval(expression).unwrap();
+        context.set("a".to_owned(), "1.0").unwrap();
+        context.set("b".to_owned(), "2.0").unwrap();
+        let result = expression.eval(&context).unwrap();
         assert_eq!(result, Specific::Number(3.0));
+
+        context.set("b".to_owned(), "3.0").unwrap();
+        let result2 = expression.eval(&context).unwrap();
+        assert_eq!(result2, Specific::Number(4.0));
     }
 }
