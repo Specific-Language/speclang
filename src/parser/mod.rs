@@ -1,7 +1,6 @@
 use serde_json::{Value, Map};
 
-pub mod pest;
-pub mod specific;
+pub mod parse;
 
 pub fn parse_with_context(input: &str, context: &mut Map<String, Value>) -> Value {
   let result = hcl::from_str(input);

@@ -1,21 +1,40 @@
-expression = { unary_expr | non_recursive_expr }
+TEMPLATE = { (INTERPOLATED | LITERAL)+ }
+INTERPOLATED = { INTERPOLATION_START ~ LOGIC ~ INTERPOLATION_END }
+GROUP = { GROUP_START ~ LOGIC ~ GROUP_END }
 
-group = { "(" ~ expression ~ ")" }
-bool = @{ "true" | "false" }
-number = @{ ("-"? ~ ASCII_DIGIT+) ~ ("." ~ ASCII_DIGIT+)? }
-value = _{ bool | number }
-reference_part = @{ ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)* }
-reference = @{ reference_part ~ ("." ~ reference_part)* }
+// Operators
+UNARY_OP = { "-" | "!" }
+LOGIC_OP = { "&&" | "||" }
+COMPARISON_OP = { "==" | "!=" | "<=" | ">=" | "<" | ">" }
+MATH_PE_OP = { "^" }
+MATH_MD_OP = { "*" | "/" | "%" }
+MATH_AS_OP = { "+" | "-" }
 
-unary_op = { "!" }
-math_op = { "+" | "-" | "*" | "/" | "%" | "^" }
-logic_op = { "&&" | "||" | "<=" | ">=" | "==" | "<" | ">" }
-binary_op = _{ math_op | logic_op }
-unary_expr = { unary_op ~ atomic }
+// Expressions
+LOGIC = { COMPARE ~ (LOGIC_OP ~ COMPARE)* }
+COMPARE = { MATH ~ (COMPARISON_OP ~ MATH)* }
+MATH = { MULTIPLY ~ (MATH_AS_OP ~ MULTIPLY)* }
+MULTIPLY = { EXPONENT ~ (MATH_MD_OP ~ EXPONENT)* }
+EXPONENT = { TERM ~ (MATH_PE_OP ~ TERM)* }
+TERM = { UNARY_OP? ~ (GROUP | NUMBER | REFERENCE) }
 
-non_recursive_expr = _{ atomic ~ binary_operation* }
-binary_operation = { binary_op ~ atomic }
+// Literals and References
+LITERAL = _{ BOOL | NUMBER | STRING }
+BOOL = { "true" | "false" }
+NUMBER = @{ ASCII_DIGIT+ ~ (DOT ~ ASCII_DIGIT+)? }
+STRING = @{ QUOTED_STRING | BARE_STRING }
+QUOTED_STRING = @{ QUOTE ~ (ESCAPED_SEQUENCE | TEMPLATE | NON_QUOTE_CHAR)* ~ QUOTE }
+BARE_STRING = _{ (!INTERPOLATION_START ~ ANY)+ }
+REFERENCE = @{ IDENTIFIER ~ (DOT ~ IDENTIFIER)* }
+IDENTIFIER = @{ ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)* }
 
-atomic = _{ group | value | reference }
-
-WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
+// Auxiliary Rules
+DOT = _{ "." }
+QUOTE = _{ "\"" }
+INTERPOLATION_START = _{ "${" }
+INTERPOLATION_END = _{ "}" }
+GROUP_START = _{ "(" }
+GROUP_END = _{ ")" }
+ESCAPED_SEQUENCE = _{ "\\" ~ (QUOTE | INTERPOLATION_START) }
+NON_QUOTE_CHAR = { !QUOTE ~ ANY }
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
