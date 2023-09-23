@@ -6,7 +6,7 @@ pub mod parser;
 
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn parse(input: &str) -> String {
-  let result = parser::parse(input);
+  let result = parser::parse(input).unwrap();
   result.to_string()
 }
 
