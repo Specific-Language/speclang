@@ -1,0 +1,34 @@
+unknown! {}
+
+function! {
+    input = list(unknown!)
+    output = unknown!
+}
+
+sqrt! {
+    extend function! {
+        input = [number!]
+        output = number!
+        output = input ^ 0.5
+    }
+}
+
+pow! {
+    extend function! {
+        input = [number!, number!]
+        output = number!
+        output = input[0] ^ input[1]
+    }
+}
+
+point! { 
+    x = number!
+    y = number!
+}
+
+line! {
+    start = point!
+    end = point!
+    length = number!
+    length = sqrt!(pow!(end.x - start.x, 2) + pow!(end.y - start.y, 2))
+}
