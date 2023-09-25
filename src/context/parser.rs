@@ -1,11 +1,9 @@
 use hcl::eval::Context;
-use hcl::eval::FuncDef;
-use hcl::eval::ParamType;
-use super::functions::math::*;
-use super::functions::string::*;
+use hcl::Value;
+use indexmap::IndexMap;
 
 pub fn parse(input: &str) -> Result<Context, &'static str> {
-    let result = hcl::from_str(input);
+    let result = hcl::from_str(format!("root {{{}}}", input).as_str());
     let parsed_input: hcl::Value = match result {
         Ok(value) => value,
         Err(error) => panic!("parser::parse error {}", &error.to_string()),
@@ -14,102 +12,93 @@ pub fn parse(input: &str) -> Result<Context, &'static str> {
         hcl::Value::Object(map) => map,
         _ => panic!("Unexpected value type in context map")
     };
+    Ok(from(map))
+}
+
+pub fn from(input: IndexMap<String, Value>) -> Context<'static> {
     let mut context = Context::new();
-    for (name, func) in build_default_functions() {
-        context.declare_func(name, func);
-    }
-    for (name, value) in map {
+    for (name, value) in input {
         context.declare_var(name, value);
     }
-    Ok(context)
-}
-
-fn build_default_functions() -> Vec<(&'static str, FuncDef)> {
-    let mut functions = Vec::new();
-    let mut math_functions = build_default_math_functions();
-    functions.append(&mut math_functions);
-    let mut string_functions = build_default_string_functions();
-    functions.append(&mut string_functions);
-    functions
-}
-
-fn build_default_math_functions() -> Vec<(&'static str, FuncDef)> {
-    let mut functions = Vec::new();
-
-    let sqrt = FuncDef::builder()
-        .param(ParamType::Number)
-        .build(sqrt_func);
-    functions.push(("sqrt", sqrt));
-
-    let pow = FuncDef::builder()
-        .param(ParamType::Number)
-        .param(ParamType::Number)
-        .build(pow_func);
-    functions.push(("pow", pow));
-
-    functions
-}
-
-fn build_default_string_functions() -> Vec<(&'static str, FuncDef)> {
-    let mut functions = Vec::new();
-
-    let length = FuncDef::builder()
-        .param(ParamType::String)
-        .build(length_func);
-    functions.push(("length", length));
-
-    functions
+    context
 }
 
 #[cfg(test)]
 mod tests {
-    use hcl::{expr::TemplateExpr, eval::Evaluate};
-
+    use hcl::expr::TemplateExpr;
+    use crate::context::evaluator;
     use super::*;
 
     #[test]
-    fn test_abc() {
-        // pow has to be built in because hcl2 doesnt support ^ operator
+    fn test_123() {
         let input = r#"
-            unknown {}
+            a = 1
+            b = 2
+            c = a + b
+            d = c + 2
+        "#;
 
-            function {
-                input = list(unknown)
-                output = unknown
-            }
-
-            sqrt {
-                extend function {
-                    input = [number]
-                    output extend number {
-                        value = pow(input, 0.5)
-                    }
-                }
-            }
-
-            point { 
-                x = number
-                y = number
-            }
-
-            line {
-                start = point
-                end = point
-                length extend number {
-                    value = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
-                }
-            }
-            "#;
-            // just feed it a context. register event hooks on value changes, etc. within the context. then just feed any and all events into the context. gpt tries to assign them when they fit, and returns a confidence vote. you can decide what to do with that.
-    let context = parse(input).unwrap();
-    // register events as they happen. and when a context is hydrated enough, it kicks into action some triggers, and emits some values. EVENT -> EVENT
-    let expression = TemplateExpr::from("the length is ${line.length}");
-    let result = expression.evaluate(&context).unwrap();
-    println!("{:?}", result);
-    // let template = Template::from_expr(&expression).unwrap();
-
-    println!("{:?}", context);
+        let context = parse(input).unwrap();
+        let expression = TemplateExpr::from("${d}");
+        let result = evaluator::evaluate(&expression, &context);
+        assert_eq!(result, hcl::Value::from(5.0));
     }
+
+    #[test]
+    fn test_extend() {
+        let input = r#"
+            x = number
+        "#;
+
+        let context = parse(input).unwrap();
+        let expression = TemplateExpr::from("${x}");
+        let result = evaluator::evaluate(&expression, &context);
+        assert_eq!(result, hcl::Value::from(5.0));
+    }
+
+    // #[test]
+    // fn test_abc() {
+    //     // pow has to be built in because hcl2 doesnt support ^ operator
+    //     let input = r#"
+    //         function {
+    //             input = list(unknown)
+    //             output = unknown
+    //         }
+
+    //         sqrt {
+    //             extend function {
+    //                 input = [number]
+    //                 output extend number {
+    //                     value = pow(input, 0.5)
+    //                 }
+    //             }
+    //         }
+
+    //         point { 
+    //             x = number
+    //             y = number
+    //         }
+
+    //         line {
+    //             start = point
+    //             end = point
+    //             length extend number {
+    //                 value = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
+    //             }
+    //         }
+    //     "#;
+    // // just feed it a context. register event hooks on value changes, etc. within the context. then just feed any and all events into the context. gpt tries to assign them when they fit, and returns a confidence vote. you can decide what to do with that.
+    // // register events as they happen. and when a context is hydrated enough, it kicks into action some triggers, and emits some values. EVENT -> EVENT
+
+    // let context = parse(input).unwrap();
+    // let expression = TemplateExpr::from("the length is ${line.length}");
+    // // let result = expression.evaluate(&context).unwrap();
+    // let result = evaluator::evaluate(&expression, &context);
+    // // println!("{:?}", result);
+    // // let template = Template::from_expr(&expression).unwrap();
+
+    // println!("{:?}", context);
+    // }
 }
 
 // #[cfg(test)]
