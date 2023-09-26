@@ -78,4 +78,33 @@ mod tests {
         let specific = Specific::from(&context);
         println!("{:?}", specific.tree);
     }
+
+    #[test]
+    fn test_weekly() {
+        let input = r#"
+        weekly_tracker_grid {
+            rows = list(weekly_tracker_row)
+            rows {
+                count = 10
+            }
+        }
+        
+        weekly_tracker_row {
+            name = string
+            days {
+                Sunday = boolean
+                Monday = boolean
+                Tuesday = boolean
+                Wednesday = boolean
+                Thursday = boolean
+                Friday = boolean
+                Saturday = boolean
+            }
+            average = sum(days.each.value ? 1 : 0) / days.length
+        }
+        "#;
+        let context = hcl::parse(input).unwrap();
+        let specific = Specific::from(&context);
+        println!("{:?}", specific.tree);
+    }
 }

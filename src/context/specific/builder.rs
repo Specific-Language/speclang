@@ -23,11 +23,12 @@ impl Builder {
         let mut merge_queue: Vec<(String, Value)> = Vec::new();
         match &value {
             Value::String(s) if s.starts_with("${") && s.ends_with("}") => {
+                // todo : evaluate more thoroughly
                 let reference = &s[2..s.len() - 1];
                 let results = self.context.collect_prefix(reference);
-                if results.len() == 0 {
-                    panic!("reference {} not found", reference);
-                }
+                // if results.len() == 0 {
+                //     panic!("reference {} not found", reference);
+                // }
                 for (k, v) in results {
                     let identifier = &k[reference.len()..].trim_start_matches('.');
                     let new_key = Self::compose_key(key, identifier);
