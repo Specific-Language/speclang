@@ -1,9 +1,7 @@
 use hcl::eval::Context;
-use hcl::Value;
-use indexmap::IndexMap;
 
 pub fn parse(input: &str) -> Result<Context, &'static str> {
-    let result = hcl::from_str(format!("root {{{}}}", input).as_str());
+    let result = hcl::from_str(format!("context {{{}}}", input).as_str());
     let parsed_input: hcl::Value = match result {
         Ok(value) => value,
         Err(error) => panic!("parser::parse error {}", &error.to_string()),
@@ -12,15 +10,11 @@ pub fn parse(input: &str) -> Result<Context, &'static str> {
         hcl::Value::Object(map) => map,
         _ => panic!("Unexpected value type in context map")
     };
-    Ok(from(map))
-}
-
-pub fn from(input: IndexMap<String, Value>) -> Context<'static> {
     let mut context = Context::new();
-    for (name, value) in input {
+    for (name, value) in map {
         context.declare_var(name, value);
     }
-    context
+    Ok(context)
 }
 
 #[cfg(test)]

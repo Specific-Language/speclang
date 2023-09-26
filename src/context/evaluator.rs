@@ -8,6 +8,8 @@ use hcl::{
 };
 use indexmap::IndexMap;
 
+// need to change this to work on a SpecificContext not just a Context
+
 /// Evaluate a HCL template expression within the provided context
 pub fn evaluate(expression: &TemplateExpr, context: &Context) -> Value {
     let template = Template::from_expr(expression).unwrap();
