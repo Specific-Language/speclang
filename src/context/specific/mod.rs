@@ -8,11 +8,11 @@ use self::builder::Builder;
 
 pub mod builder;
 
-pub struct SpecificContext {
+pub struct Specific {
     pub tree: BTreeMap<String, Value>
 }
 
-impl SpecificContext {
+impl Specific {
     pub fn new() -> Self {
         Self {
             tree: BTreeMap::new()
@@ -27,7 +27,7 @@ impl SpecificContext {
         let root_expr = TemplateExpr::from("${context}");
         let result = root_expr.evaluate(input).unwrap();
         if let Value::Object(obj) = result {
-            SpecificContext::builder()
+            Specific::builder()
                 .merge("", &obj)
                 .build()
         } else {
@@ -49,7 +49,7 @@ impl SpecificContext {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::parser;
+    use crate::context::hcl;
 
     #[test]
     fn test_from() {
@@ -70,9 +70,12 @@ mod tests {
             bings extends "bird.wings" {
                 count = 4
             }
+            dird extends wuck {
+                wings = bings
+            }
         "#;
-        let context = parser::parse(input).unwrap();
-        let specific = SpecificContext::from(&context);
+        let context = hcl::parse(input).unwrap();
+        let specific = Specific::from(&context);
         println!("{:?}", specific.tree);
     }
 }

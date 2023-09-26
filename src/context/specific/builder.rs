@@ -1,20 +1,20 @@
 use hcl::Value;
 use indexmap::IndexMap;
 
-use super::SpecificContext;
+use super::Specific;
 
 pub struct Builder {
-    context: SpecificContext,
+    context: Specific,
 }
 
 impl Builder {
     pub fn new() -> Self {
         Self {
-            context: SpecificContext::new(),
+            context: Specific::new(),
         }
     }
 
-    pub fn build(self) -> SpecificContext {
+    pub fn build(self) -> Specific {
         self.context
     }
 

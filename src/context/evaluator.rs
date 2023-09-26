@@ -185,7 +185,7 @@ mod tests {
             z = 4
             b = sqrt(a + z) / 2
         "#;
-        let context = crate::context::parser::parse(input).unwrap();
+        let context = crate::context::hcl::parse(input).unwrap();
         let expression = TemplateExpr::from("magic number is ${b + 2}!");
         let result = evaluate(&expression, &context);
         assert_eq!(result.as_str().unwrap(), "magic number is 3.5!");
@@ -198,7 +198,7 @@ mod tests {
             z = 4
             b = a % z
         "#;
-        let context = crate::context::parser::parse(input).unwrap();
+        let context = crate::context::hcl::parse(input).unwrap();
         let expression = TemplateExpr::from("${b}");
         let result = evaluate(&expression, &context);
         assert_eq!(result.as_f64().unwrap(), 1.0);
