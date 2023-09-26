@@ -20,7 +20,27 @@ impl Builder {
 
     pub fn apply_value(mut self, key: &str, value: Value) -> Self {
         println!("{} = {:?}", key, value);
-        self.context.tree.insert(key.to_string(), value);
+        let mut merge_queue: Vec<(String, Value)> = Vec::new();
+        match &value {
+            Value::String(s) if s.starts_with("${") && s.ends_with("}") => {
+                let reference = &s[2..s.len() - 1];
+                let results = self.context.collect_prefix(reference);
+                if results.len() == 0 {
+                    panic!("reference {} not found", reference);
+                }
+                for (k, v) in results {
+                    let identifier = &k[reference.len()..].trim_start_matches('.');
+                    let new_key = Self::compose_key(key, identifier);
+                    merge_queue.push((new_key, v.clone()));
+                }
+            },
+            _ => {
+                self.context.tree.insert(key.to_string(), value);
+            }
+        }
+        for (new_key, new_value) in merge_queue {
+            self = self.apply_value(&new_key, new_value);
+        }
         self
     }
 
@@ -28,7 +48,8 @@ impl Builder {
         let mut merge_queue: Vec<(String, Value)> = Vec::new();
         for (reference, extends_obj) in value_obj.iter() {
             // Look up reference and hydrate
-            let ref_props = self.context.collect_prefix(reference);
+            let ref_then_dot = format!("{}.", reference);
+            let ref_props = self.context.collect_prefix(ref_then_dot.as_str());
             for (ref_key, ref_value) in ref_props {
                 let name = &ref_key[reference.len()..].trim_start_matches('.');
                 let new_key = Self::compose_key(prefix, name);
