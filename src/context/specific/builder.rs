@@ -19,7 +19,7 @@ impl Builder {
     }
 
     pub fn apply_value(mut self, key: &str, value: Value) -> Self {
-        println!("{} = {:?}", key, value);
+        println!("set {} = {:?}", key, value);
         let mut merge_queue: Vec<(String, Value)> = Vec::new();
         match &value {
             Value::String(s) if s.starts_with("${") && s.ends_with("}") => {

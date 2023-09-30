@@ -1,12 +1,9 @@
-use std::collections::HashMap;
-
 use hcl::{
     eval::{Context, Evaluate},
     expr::{BinaryOperator, Operation, TemplateExpr, UnaryOperator},
     template::{Element, Template},
-    Expression, BinaryOp, UnaryOp, Value, Object, Attribute, edit::expr::Null, Block, Body,
+    Expression, BinaryOp, UnaryOp, Value, Attribute,
 };
-use indexmap::IndexMap;
 
 // need to change this to work on a SpecificContext not just a Context
 
@@ -113,7 +110,7 @@ fn apply_binary_operation(binary: &BinaryOp, lhs: Value, rhs: Value) -> Value {
                     };
                     Value::from(result)
                 }
-                _ => panic!("Unsupported operands for arithmetic operation"),
+                _ => panic!("Unsupported operands for math operation"),
             }
         },
         | BinaryOperator::And 
@@ -139,7 +136,7 @@ fn apply_binary_operation(binary: &BinaryOp, lhs: Value, rhs: Value) -> Value {
                     };
                     Value::from(result)
                 }
-                _ => panic!("Unsupported operands for logical operation"),
+                _ => panic!("Unsupported operands for logic operation"),
             }
         },
     }

@@ -1,12 +1,9 @@
 use std::collections::BTreeMap;
-use hcl::{
-    Value, 
-    eval::{Context, Evaluate}, 
-    expr::TemplateExpr
-};
+use hcl::Value;
 use self::builder::Builder;
 
 pub mod builder;
+// mod experiment;
 
 pub struct Specific {
     pub tree: BTreeMap<String, Value>
@@ -22,18 +19,19 @@ impl Specific {
     pub fn builder() -> Builder {
         Builder::new()
     }
+    
+    pub fn from_str(input: &str) -> Result<Self, String> {
+        let parsed_value: Value = hcl::from_str(input)
+            .map_err(|err| err.to_string())?;
 
-    pub fn from(input: &Context) -> Self {
-        let root_expr = TemplateExpr::from("${context}");
-        let result = root_expr.evaluate(input).unwrap();
-        if let Value::Object(obj) = result {
-            Specific::builder()
-                .merge("", &obj)
-                .build()
-        } else {
-            panic!("context root did not evaluate to an object");
-        }
-    }
+        let input_map = parsed_value
+            .as_object()
+            .ok_or("Expected parsed value to be a Value::Object".to_string())?;
+            
+        Ok(Specific::builder()
+            .merge("", &input_map)
+            .build())
+    }    
 
     pub fn collect_prefix(&self, prefix: &str) -> Vec<(&String, &Value)> {
         let mut end_bound = prefix.to_string();
@@ -49,7 +47,6 @@ impl Specific {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::hcl;
 
     #[test]
     fn test_from() {
@@ -74,8 +71,7 @@ mod tests {
                 wings = bings
             }
         "#;
-        let context = hcl::parse(input).unwrap();
-        let specific = Specific::from(&context);
+        let specific = Specific::from_str(input).unwrap();
         println!("{:?}", specific.tree);
     }
 
@@ -90,7 +86,7 @@ mod tests {
         }
         
         weekly_tracker_row {
-            name = string
+            mantra = string
             days {
                 Sunday = boolean
                 Monday = boolean
@@ -100,11 +96,11 @@ mod tests {
                 Friday = boolean
                 Saturday = boolean
             }
-            average = sum(days.each.value ? 1 : 0) / days.length
+            // each specific is a snapshot in time. expressions should be evaluated as part of construction
+            average = days.each[value ? 1 : 0].sum / days.length
         }
         "#;
-        let context = hcl::parse(input).unwrap();
-        let specific = Specific::from(&context);
-        println!("{:?}", specific.tree);
+        let specific = Specific::from_str(input).unwrap();
+        println!("tree: {:?}", specific.tree);
     }
 }

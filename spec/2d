@@ -6,9 +6,9 @@ point {
 }
 
 line {
-  a = point
-  b = point
-  length = distance(a, b)
+  start = point
+  end = point
+  length = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
 }
 
 circle {
