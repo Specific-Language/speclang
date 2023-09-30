@@ -1,16 +1,18 @@
 use std::collections::BTreeMap;
 use hcl::Value;
-use self::builder::Builder;
+use self::builder::{
+    Builder, 
+    value::Specific
+};
 
 pub mod builder;
 pub mod evaluator;
-// mod experiment;
 
-pub struct Specific {
-    pub tree: BTreeMap<String, Value>
+pub struct Context {
+    pub tree: BTreeMap<String, Specific>
 }
 
-impl Specific {
+impl Context {
     pub fn new() -> Self {
         Self {
             tree: BTreeMap::new()
@@ -27,14 +29,15 @@ impl Specific {
 
         let input_map = parsed_value.as_object()
             .ok_or("Expected parsed value to be a Value::Object".to_string())?;
-            
-        Ok(Specific::builder()
-            .merge("", &input_map)
+        
+        Ok(Context::builder()
+            .apply_object("", &input_map)
             .build())
     }    
 
-    pub fn collect_prefix(&self, prefix: &str) -> Vec<(&String, &Value)> {
+    pub fn collect_prefix(&self, prefix: &str) -> Vec<(&String, &Specific)> {
         let mut end_bound = prefix.to_string();
+        end_bound.push('.');
         if let Some(last_char) = end_bound.pop() {
             end_bound.push((last_char as u8 + 1) as char);
         } else {
@@ -49,6 +52,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_basic() {
+        let input = r#"
+            a = 1
+            b = 2
+            x = a + b
+            z = x * a * 2
+            o = x
+        "#;
+        let specific = Context::from_str(input).unwrap();
+        println!("{:?}", specific.tree);
+    }
+    
+    #[test]
     fn test_from() {
         let input = r#"
             bird {
@@ -57,6 +73,9 @@ mod tests {
                     feathered = true
                     count = 2
                 }
+            }
+            cat {
+                meow = true
             }
             duck extends bird {
                 quack = true
@@ -67,11 +86,16 @@ mod tests {
             bings extends "bird.wings" {
                 count = 4
             }
-            dird extends wuck {
-                wings = bings
+            dird {
+                extends wuck {
+                    wings = bings
+                }
+                extends cat {
+                    meow = false
+                }
             }
         "#;
-        let specific = Specific::from_str(input).unwrap();
+        let specific = Context::from_str(input).unwrap();
         println!("{:?}", specific.tree);
     }
 
@@ -100,7 +124,7 @@ mod tests {
             average = days.each[value ? 1 : 0].sum / days.length
         }
         "#;
-        let specific = Specific::from_str(input).unwrap();
+        let specific = Context::from_str(input).unwrap();
         println!("tree: {:?}", specific.tree);
     }
 }
