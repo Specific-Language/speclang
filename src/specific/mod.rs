@@ -3,6 +3,7 @@ use hcl::Value;
 use self::builder::Builder;
 
 pub mod builder;
+pub mod evaluator;
 // mod experiment;
 
 pub struct Specific {
@@ -24,8 +25,7 @@ impl Specific {
         let parsed_value: Value = hcl::from_str(input)
             .map_err(|err| err.to_string())?;
 
-        let input_map = parsed_value
-            .as_object()
+        let input_map = parsed_value.as_object()
             .ok_or("Expected parsed value to be a Value::Object".to_string())?;
             
         Ok(Specific::builder()
