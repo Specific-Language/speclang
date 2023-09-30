@@ -49,6 +49,8 @@ impl Context {
 
 #[cfg(test)]
 mod tests {
+    use crate::specific::builder::value::{Expression, Operator, Binary};
+
     use super::*;
 
     #[test]
@@ -56,12 +58,26 @@ mod tests {
         let input = r#"
             a = 1
             b = 2
-            x = a + b
-            z = x * a * 2
-            o = x
+            c = a + b
         "#;
         let specific = Context::from_str(input).unwrap();
         println!("{:?}", specific.tree);
+        assert_eq!(
+            specific.tree.get("a").unwrap(),
+            &Specific::Literal(Value::Number(1.into()))
+        );
+        assert_eq!(
+            specific.tree.get("b").unwrap(),
+            &Specific::Literal(Value::Number(2.into()))
+        );
+        assert_eq!(
+            specific.tree.get("c").unwrap(),
+            &Specific::Expression(Box::new(Expression {
+                left: Specific::Reference("a".to_string()),
+                op: Operator::Binary(Binary::Add),
+                right: Specific::Reference("b".to_string()),
+            }))
+        );
     }
     
     #[test]
@@ -87,6 +103,7 @@ mod tests {
                 count = 4
             }
             dird {
+                name = string
                 extends wuck {
                     wings = bings
                 }

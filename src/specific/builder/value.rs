@@ -1,10 +1,10 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Unary {
     Not,
     Negative,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Binary {
     Add,
     Subtract,
@@ -21,20 +21,20 @@ pub enum Binary {
     Or,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
     Unary(Unary),
     Binary(Binary),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Expression {
-    left: Specific,
-    op: Operator,
-    right: Specific,
+    pub left: Specific,
+    pub op: Operator,
+    pub right: Specific,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Specific {
     Unknown,
     Literal(hcl::Value),
