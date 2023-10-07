@@ -84,6 +84,7 @@ impl From<hcl::Expression> for Specific {
             hcl::Expression::Variable(ref_value) => {
                 Self::Reference(ref_value.to_string())
             },
+            hcl::Expression::Parenthesis(expr) => (*expr).into(),
             hcl::Expression::Number(value) => Self::Literal(hcl::Value::Number(value)),
             hcl::Expression::Bool(value) => Self::Literal(hcl::Value::Bool(value)),
             hcl::Expression::String(value) => Self::Literal(hcl::Value::String(value)),

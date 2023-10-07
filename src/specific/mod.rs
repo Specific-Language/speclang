@@ -1,12 +1,15 @@
 use std::collections::BTreeMap;
 use hcl::Value;
+use self::snapshot::Snapshot;
 use self::builder::{
     Builder, 
     value::Specific
 };
 
 pub mod builder;
-pub mod evaluator;
+pub mod snapshot;
+
+// pub mod evaluator;
 
 pub struct Context {
     pub tree: BTreeMap<String, Specific>
@@ -22,6 +25,11 @@ impl Context {
     pub fn builder() -> Builder {
         Builder::new()
     }
+
+    pub fn snapshot(self) -> Snapshot {
+        Snapshot::from(&self)
+        // or maybe just return self.clone and operate on the clone?
+    }
     
     pub fn from_str(input: &str) -> Result<Self, String> {
         let parsed_value: Value = hcl::from_str(input)
@@ -33,7 +41,11 @@ impl Context {
         Ok(Context::builder()
             .apply_object("", &input_map)
             .build())
-    }    
+    }
+
+    pub fn get_value(&self, name: &str) -> &Specific {
+        self.tree.get(name).unwrap()
+    }
 
     pub fn collect_prefix(&self, prefix: &str) -> Vec<(&String, &Specific)> {
         let mut end_bound = prefix.to_string();
@@ -78,6 +90,55 @@ mod tests {
                 right: Specific::Reference("b".to_string()),
             }))
         );
+    }
+
+    #[test]
+    fn test_2d() {
+        let input = r#"
+        point {
+            x = number // shorthand for x impl number {}
+            y = number
+        }
+
+        line {
+            start = point
+            end = point
+
+            length = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
+            // since this isnt a Literal, and its not a Reference, it is a derived value
+        
+            from impl function {
+                input = [start, end]
+                output impl line {
+                    start = from.input[0]
+                    end = from.input[1]
+                }
+            }
+        }
+        
+        circle {
+            center = point
+            radius = number
+            area = MathPi * radius * radius
+            circumference = 2 * MathPi * radius
+        }
+        
+        triangle {
+            points { 
+                a = point
+                b = point
+                c = point
+            }
+            sides {
+                ab = line.from(points.a, points.b)
+                bc = line.from(points.b, points.c)
+                ca = line.from(points.c, points.a)
+            }
+            perimeter = sides.ab.length + sides.bc.length + sides.ca.length
+        }
+        "#;
+        let specific = Context::from_str(input).unwrap();
+        println!("{:?}", specific.tree);
     }
     
     #[test]
