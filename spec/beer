@@ -25,7 +25,7 @@ brewery {
     beers {}
 }
 
-// specific traits are capitalized. think proper nouns
+// specific traits are capitalized. proper nouns. can exist in real world without further impl.
 Reviresco impl beer {
     brewery = TresLitros
 }
