@@ -1,0 +1,41 @@
+thing {
+    mass = kilograms
+}
+
+animal {
+    species = string
+    temperament = string
+
+    impl thing {}
+}
+
+dog_breed {
+    akc_name = string
+}
+
+dog {
+    breed = dog_breed
+
+    impl animal {
+        species = "Canis lupus familiaris"
+    }
+}
+
+human {
+    impl animal {
+        species = "Homo sapiens sapiens"
+    }
+}
+
+golden_retriever {
+    impl dog {
+        temperament = "loyal"
+
+        breed {
+            akc_name = "Golden Retriever"
+        }
+    }
+    impl human {
+        temperament = "loyal"
+    }
+}

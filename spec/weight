@@ -1,0 +1,35 @@
+weight {
+    value = number
+    unit = string
+
+    impl number {
+        value = weight.value
+    }
+}
+
+grams as weight {
+    unit = "g"
+
+    impl {
+        kilograms = weight.value / 1000
+        pounds = weight.value * 0.00220462
+    }
+}
+
+kilograms as weight {
+    unit = "kg"
+
+    impl {
+        grams = weight.value * 1000
+        pounds = weight.value * 2.20462
+    }
+}
+
+pounds as weight {
+    unit = "lb"
+
+    impl {
+        kilograms = weight.value * 0.453592
+        grams = weight.value * 453.592
+    }
+}

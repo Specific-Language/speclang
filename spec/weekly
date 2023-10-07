@@ -1,20 +1,38 @@
-weekly_tracker_grid! {
-    rows = list!(weekly_tracker_row!)
-    rows {
-        count = 10
+stats {
+    title = string
+    items = list(number)
+    average = sum / items.length
+    sum = items.reduce((a, b) => a + b)
+    max = items.max()
+    min = items.min()
+}
+
+weekly_tracker_grid {
+    impl list as rows {
+        each = weekly_tracker_row
+        length = 10
+    }
+    impl stats {
+        title = "Row Score"
+        items = rows.each[average]
     }
 }
 
-weekly_tracker_row! {
+weekly_scorecard {
+    Sunday = boolean,
+    Monday = boolean,
+    Tuesday = boolean,
+    Wednesday = boolean,
+    Thursday = boolean,
+    Friday = boolean,
+    Saturday = boolean
+}
+
+weekly_tracker_row {
     name = string
-    days {
-        Sunday = boolean,
-        Monday = boolean,
-        Tuesday = boolean,
-        Wednesday = boolean,
-        Thursday = boolean,
-        Friday = boolean,
-        Saturday = boolean
+    impl weekly_scorecard as days {}
+    impl stats {
+        title = "Daily Score"
+        items = days.each[value]
     }
-    average = sum(days.each.value ? 1 : 0) / days.length
 }

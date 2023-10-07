@@ -1,0 +1,35 @@
+point {
+    x = number
+    y = number
+}
+
+line {
+    start = point
+    end = point
+    length = sqrt((end.x - start.x)^2 + (end.y - start.y)^2)
+
+    as function {
+        input = [start, end]
+    }
+}
+
+circle {
+    center = point
+    radius = number
+    area = Math.Pi * radius * radius
+    circumference = 2 * Math.Pi * radius
+}
+
+triangle {
+    points { 
+        a = point
+        b = point
+        c = point
+    }
+    sides {
+        ab = line(points.a, points.b)
+        bc = line(points.b, points.c)
+        ca = line(points.c, points.a)
+    }
+    perimeter = sides.ab.length + sides.bc.length + sides.ca.length
+}

@@ -1,0 +1,43 @@
+latitude = number // shorthand for "latitude impl number {}"
+longitude = number
+
+coordinates {
+    latitude {} // shorthand for "coordinates.latitude impl latitude {}"
+    longitude {}
+}
+
+location {
+    coordinates {}
+    // region, language, etc.
+}
+
+ibu = number
+
+beer {
+    brewery {}
+    ibu {} // etc.
+}
+
+beers = list(beer) // shorthand for "beers impl list { each = beer }"
+
+brewery {
+    location {}
+    beers {}
+}
+
+// specific traits are capitalized. think proper nouns
+Reviresco impl beer {
+    brewery = TresLitros
+}
+
+TresLitros impl brewery {
+    location = Salida
+    beers = [Reviresco]
+}
+
+Salida impl location {
+    coordinates {
+        latitude = 38.5342
+        longitude = -105.9980
+    }
+}
