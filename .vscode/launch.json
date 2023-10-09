@@ -1,0 +1,55 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Cargo test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--", "--timeout", "3600",
+                ]
+            },
+            "args": []
+        }
+        // {
+        //     "type": "lldb",
+        //     "request": "launch",
+        //     "name": "debug tests",
+        //     "cargo": {
+        //         "args": ["test", "--no-run"],
+        //         "filter": {
+        //             "name": "speclang",
+        //             "kind": "lib"
+        //         }
+        //     },
+        //     "args": ["--nocapture"],
+        //     "cwd": "${workspaceFolder}",
+        //     "program": "${workspaceFolder}/target/debug/deps/speclang-bf06bc58aa483cef",
+        //     "console": "integratedTerminal",
+        //     "sourceLanguages": ["rust"]
+        // } 
+        // {
+        //     "type": "lldb",
+        //     "request": "launch",
+        //     "name": "tests",
+        //     "cargo": {
+        //         "args": [
+        //             "test",
+        //             "--no-run",
+        //             "--lib",
+        //             "--package={workspaceFolderBasename}"
+        //         ],
+        //         "filter": {
+        //             "name": "{workspaceFolderBasename}",
+        //             "kind": "lib"
+        //         }
+        //     },
+        //     "args": [],
+        //     "cwd": "${workspaceFolder}"
+        // }
+    ]
+}

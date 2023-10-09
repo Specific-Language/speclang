@@ -36,16 +36,53 @@ pub struct Expression {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Specific {
-    Unknown,
+    Never,
     Literal(hcl::Value),
     Reference(String),
-    Template(Vec<Specific>),
     Expression(Box<Expression>),
+    List(Vec<Specific>),
+    StringTemplate(Vec<Specific>),
 }
 
 impl From<&hcl::Value> for Specific {
     fn from(value: &hcl::Value) -> Self {
-        Self::Literal(value.clone())
+        match value {
+            hcl::Value::Array(array_value) => {
+                let mut result: Vec<Specific> = Vec::new();
+                for item in array_value {
+                    result.push(item.into());
+                }
+                Self::List(result)
+            },
+            hcl::Value::String(string_value) => {
+                // todo : yuck! make this DRY
+                let template_expr = hcl::TemplateExpr::from(string_value.as_str());
+                let template = hcl::Template::from_expr(&template_expr).expect("Expected a template");
+                let elements = template.elements();
+                if elements.len() == 1 {
+                    Self::from(&elements[0])
+                } else {
+                    let mut result: Vec<Specific> = Vec::new();
+                    for element in elements {
+                        result.push(element.into());
+                    }
+                    Self::StringTemplate(result)
+                }
+            },
+            _ => Self::Literal(value.clone())
+        }
+    }
+}
+
+impl From<&hcl::template::Element> for Specific {
+    fn from(element: &hcl::template::Element) -> Self {
+        match element {
+            hcl::template::Element::Literal(value) => Self::Literal(value.as_str().into()),
+            hcl::template::Element::Interpolation(value) => value.expr.clone().into(),
+            hcl::template::Element::Directive(value) => {
+                panic!("Unsupported directive: {:?}", value);
+            }
+        }
     }
 }
 
@@ -54,7 +91,7 @@ impl From<hcl::Expression> for Specific {
         match value {
             hcl::Expression::Operation(op) => match *op {
                 hcl::expr::Operation::Unary(unary) => Specific::Expression(Box::new(Expression {
-                    left: Specific::Unknown,
+                    left: Specific::Never,
                     op: match unary.operator {
                         hcl::expr::UnaryOperator::Not => Operator::Unary(Unary::Not),
                         hcl::expr::UnaryOperator::Neg => Operator::Unary(Unary::Negative),
@@ -81,28 +118,12 @@ impl From<hcl::Expression> for Specific {
                     right: binary.rhs_expr.into(),
                 })),
             }
-            hcl::Expression::Variable(ref_value) => {
-                Self::Reference(ref_value.to_string())
-            },
+            hcl::Expression::Variable(ref_value) => Self::Reference(ref_value.to_string()),
             hcl::Expression::Parenthesis(expr) => (*expr).into(),
-            hcl::Expression::Number(value) => Self::Literal(hcl::Value::Number(value)),
-            hcl::Expression::Bool(value) => Self::Literal(hcl::Value::Bool(value)),
-            hcl::Expression::String(value) => Self::Literal(hcl::Value::String(value)),
-            _ => {
-                panic!("Unsupported expression: {:?}", value);
-            }
-        }
-    }
-}
-
-impl From<&hcl::template::Element> for Specific {
-    fn from(element: &hcl::template::Element) -> Self {
-        match element {
-            hcl::template::Element::Literal(value) => Self::Literal(value.as_str().into()),
-            hcl::template::Element::Interpolation(value) => value.expr.clone().into(),
-            hcl::template::Element::Directive(value) => {
-                panic!("Unsupported directive: {:?}", value);
-            }
+            hcl::Expression::Number(value) => Self::Literal(value.into()),
+            hcl::Expression::Bool(value) => Self::Literal(value.into()),
+            hcl::Expression::String(value) => Self::Literal(value.into()),
+            _ => panic!("Unsupported expression: {:?}", value),
         }
     }
 }

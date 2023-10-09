@@ -1,13 +1,11 @@
 use std::collections::BTreeMap;
 use hcl::Value;
-use self::snapshot::Snapshot;
 use self::builder::{
     Builder, 
     value::Specific
 };
 
 pub mod builder;
-pub mod snapshot;
 
 // pub mod evaluator;
 
@@ -24,11 +22,6 @@ impl Context {
 
     pub fn builder() -> Builder {
         Builder::new()
-    }
-
-    pub fn snapshot(self) -> Snapshot {
-        Snapshot::from(&self)
-        // or maybe just return self.clone and operate on the clone?
     }
     
     pub fn from_str(input: &str) -> Result<Self, String> {
@@ -47,9 +40,9 @@ impl Context {
         self.tree.get(name).unwrap()
     }
 
-    pub fn collect_prefix(&self, prefix: &str) -> Vec<(&String, &Specific)> {
+    pub fn collect_prefix(&self, prefix: &str, sep: char) -> Vec<(&String, &Specific)> {
         let mut end_bound = prefix.to_string();
-        end_bound.push('.');
+        end_bound.push(sep);
         if let Some(last_char) = end_bound.pop() {
             end_bound.push((last_char as u8 + 1) as char);
         } else {
@@ -204,5 +197,71 @@ mod tests {
         "#;
         let specific = Context::from_str(input).unwrap();
         println!("tree: {:?}", specific.tree);
+    }
+
+    #[test]
+    fn test_coordinates() {
+        let input = r#"
+            latitude impl number {
+                range = "[-90, 90]"
+            }
+            longitude impl number {
+                range = "[-180, 180]"
+            }
+            coordinates { 
+                // "any group that fulfills these subtraits is an instance of `coordinates`"
+                latitude impl latitude {}
+                longitude {}
+            }
+            location {
+                coordinates {}
+                // impl region, language, laws, etc
+            }
+        "#;
+        let specific = Context::from_str(input).unwrap();
+        println!("\ntree: {:?}", specific.tree);
+    }
+
+    #[test]
+    fn test_treslitros() {
+        let input = r#"
+            ibu = number // shorthand for `ibu { number {} }`
+
+            beer {
+                brewery {}
+                ibu {}
+            }
+            
+            // todo : function calls
+            beers = "list(beer)"
+
+            brewery {
+                location {}
+                beers {}
+            }
+
+            // specific traits are capitalized. proper nouns. can exist in real world
+            Reviresco beer {
+                brewery = TresLitros
+            }
+
+            TresLitros brewery {
+                location = Salida
+                beers = [Reviresco]
+            }
+
+            TresLitros live_music_venue {
+                event_calendar {}
+            }
+
+            Salida location {
+                coordinates {
+                    latitude = 38.5342
+                    longitude = -105.9980
+                }
+            }
+        "#;
+        let specific = Context::from_str(input).unwrap();
+        println!("\ntree: {:?}", specific.tree);
     }
 }

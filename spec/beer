@@ -1,9 +1,6 @@
-latitude = number // shorthand for "latitude impl number {}"
-longitude = number
-
-coordinates {
-    latitude {} // shorthand for "coordinates.latitude impl latitude {}"
-    longitude {}
+coordinates { // "any group that fulfills these subtraits is an instance of coordinates"
+    latitude impl latitude {}   // the explicit syntax
+    longitude {}                // shorthand for "coordinates.longitude impl longitude {}"
 }
 
 location {
@@ -11,7 +8,7 @@ location {
     // region, language, etc.
 }
 
-ibu = number
+ibu = number // shorthand for "ibu impl number {}"
 
 beer {
     brewery {}

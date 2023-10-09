@@ -1,4 +1,4 @@
-use hcl::{Value, template::Element, Template, Expression};
+use hcl::{template::Element, Value};
 use indexmap::IndexMap;
 
 use super::Context;
@@ -21,85 +21,58 @@ impl Builder {
         self.context
     }
 
-    pub fn apply_value(mut self, key: &str, value: Value) -> Self {
-        let specific_value = Specific::Literal(value);
-        self.context.tree.insert(key.to_string(), specific_value);
-        self
-    }
-
-    pub fn apply_template(mut self, key: &str, template: Template) -> Self {    
+    pub fn apply_string_template(mut self, key: &str, template: hcl::Template) -> Self {
         let elements = template.elements();
-        if elements.len() == 1 {
-            let single: &Element = &elements[0];
-            self.context.tree.insert(key.to_string(), single.into());
-        } else {
-            let template_vec: Vec<Specific> = elements.into_iter()
-                .map(Into::into)
-                .collect();
-            let value = Specific::Template(template_vec);
-            self.context.tree.insert(key.to_string(), value.into());
-        };
-        self
-    }
-    
-    pub fn apply_extends(mut self, prefix: &str, extends_obj: &IndexMap<String, Value>) -> Self {
-        let mut temp_vec: Vec<(String, Specific)> = Vec::new();
-
-        for (reference, overrides) in extends_obj.iter() {
-            let new_props = self.context.collect_prefix(reference);
-            for (ref_key, ref_value) in new_props {
-                let name: String = Self::extract_property_name(ref_key, reference);
-                let new_key = Self::compose_key(prefix, name.as_str());
-                temp_vec.push((new_key, ref_value.clone()));
+        match elements.len() {
+            0 => {
+                panic!("Oops! Found an empty template");
             }
-            for (new_key, new_value) in &temp_vec {
-                self.context.tree.insert(new_key.clone(), new_value.clone());
+            1 => {
+                let element: &Element = &elements[0];
+                self.context.tree.insert(key.to_string(), element.into());
+            },
+            _ => {
+                let elements: Vec<Specific> = elements.into_iter().map(Into::into).collect();
+                let template = Specific::StringTemplate(elements);
+                self.context.tree.insert(key.to_string(), template.into());
             }
-            let overrides_obj = overrides.as_object().unwrap();
-            self = self.apply_object(prefix, overrides_obj);
-
-            temp_vec.clear();
         }
         self
     }
-    
+
     pub fn apply_object(mut self, prefix: &str, obj: &IndexMap<String, Value>) -> Self {
         for (key, value) in obj.iter() {
-            let new_key = Self::compose_key(prefix, key);
-            match key.as_str() {
-                "extends" => {
-                    let extends_obj = value.as_object().unwrap();
-                    self = self.apply_extends(prefix, extends_obj);
+            let destination = Self::compose_key(prefix, key);
+            match value {
+                Value::Object(value_obj) if value_obj.is_empty() => {
+                    self.context.tree.insert(destination, Specific::Reference(key.clone()));
                 }
-                _ => match value {
-                    Value::Object(value_obj) => {
-                        self = self.apply_object(&new_key, value_obj);
-                    }
-                    Value::String(s) => {
-                        let template_expr = hcl::TemplateExpr::from(s.as_str());
-                        let template = hcl::Template::from_expr(&template_expr).unwrap();
-                        self = self.apply_template(&new_key, template);
-                    },
-                    _ => {
-                        self = self.apply_value(&new_key, value.clone());
-                    }
+                Value::Object(value_obj) => {
+                    self = self.apply_object(&destination, value_obj);
+                }
+                Value::String(s) => {
+                    let template_expr = hcl::TemplateExpr::from(s.as_str());
+                    let template = hcl::Template::from_expr(&template_expr).expect("Expected a template");
+                    self = self.apply_string_template(&destination, template);
+                }
+                _ => {
+                    self.context.tree.insert(destination, value.into());
                 }
             }
         }
         self
-    }    
-
-    fn compose_key(prefix: &str, key: &str) -> String {
-        match key.is_empty() {
-            true => prefix.to_string(),
-            false => match prefix.is_empty() {
-                true => key.to_string(),
-                false => format!("{}.{}", prefix, key),
-            }
-        }
     }
 
-    fn extract_property_name(reference: &str, parent_name: &str) -> String {
-        reference[parent_name.len()..].trim_start_matches('.').to_string()
+    fn compose_key(prefix: &str, name: &str) -> String {
+        if prefix.len() == 0 {
+            println!("~ {}", name);
+        } else {
+            println!("~ {}.{}", prefix, name);
+        }
+        match (name.is_empty(), prefix.is_empty()) {
+            (true, _) => prefix.to_string(),
+            (false, true) => name.to_string(),
+            (false, false) => format!("{}.{}", prefix, name)
+        }
     }
 }
