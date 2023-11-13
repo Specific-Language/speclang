@@ -1,40 +1,53 @@
 coordinates { // "any group that fulfills these subtraits is an instance of coordinates"
-    latitude impl latitude {}   // the explicit syntax
-    longitude {}                // shorthand for "coordinates.longitude impl longitude {}"
+    latitude {}
+    longitude {} // shorthand for `
 }
 
 location {
     coordinates {}
-    // region, language, etc.
+    // region, language, laws, etc.
 }
 
-ibu = number // shorthand for "ibu impl number {}"
+ibu = number // shorthand for `ibu { number {} }`
 
 beer {
     brewery {}
-    ibu {} // etc.
+    ibu {}
 }
 
-beers = list(beer) // shorthand for "beers impl list { each = beer }"
+// todo : function calls
+beers = "list(beer)"
 
 brewery {
-    location {}
+    location {} // {} means "can be filled by any specific trait"
     beers {}
 }
 
-// specific traits are capitalized. proper nouns. can exist in real world without further impl.
-Reviresco impl beer {
-    brewery = TresLitros
+// specific traits are capitalized. proper nouns. can exist in real world
+Reviresco {
+    beer {
+        brewery = TresLitros // assignment creates a specific "pin" in the trait. a "specific trait"
+    }
 }
 
-TresLitros impl brewery {
-    location = Salida
-    beers = [Reviresco]
+TresLitros {
+    brewery {
+        location = Salida
+        beers = [Reviresco]
+    }
 }
 
-Salida impl location {
-    coordinates {
-        latitude = 38.5342
-        longitude = -105.9980
+TresLitros {
+    live_music_venue {
+        event_calendar {}
+    }
+}
+
+Salida {
+    location {
+        coordinates {
+            latitude = 38.5342
+            longitude = -105.9980
+        }
     }
 }

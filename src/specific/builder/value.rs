@@ -1,3 +1,9 @@
+use hcl::Value;
+use hcl::template::Element;
+use hcl::expr::Operation;
+use hcl::expr::UnaryOperator;
+use hcl::expr::BinaryOperator;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Unary {
     Not,
@@ -44,20 +50,31 @@ pub enum Specific {
     StringTemplate(Vec<Specific>),
 }
 
+// this seems superfluous potentially
+impl From<&Vec<hcl::Value>> for Specific {
+    fn from(values: &Vec<Value>) -> Self {
+        let mut result: Vec<Specific> = Vec::new();
+        for value in values {
+            result.push(value.into());
+        }
+        Self::List(result)
+    }
+}
+
 impl From<&hcl::Value> for Specific {
-    fn from(value: &hcl::Value) -> Self {
+    fn from(value: &Value) -> Self {
         match value {
-            hcl::Value::Array(array_value) => {
+            Value::Array(array_value) => {
                 let mut result: Vec<Specific> = Vec::new();
                 for item in array_value {
                     result.push(item.into());
                 }
                 Self::List(result)
             },
-            hcl::Value::String(string_value) => {
-                // todo : yuck! make this DRY
+            Value::String(string_value) => {
+                // todo : can we make this DRY
                 let template_expr = hcl::TemplateExpr::from(string_value.as_str());
-                let template = hcl::Template::from_expr(&template_expr).expect("Expected a template");
+                let template = hcl::Template::from_expr(&template_expr).unwrap();
                 let elements = template.elements();
                 if elements.len() == 1 {
                     Self::from(&elements[0])
@@ -74,46 +91,48 @@ impl From<&hcl::Value> for Specific {
     }
 }
 
+// is this rlly necessary?seems like could be handled directly as hcl
 impl From<&hcl::template::Element> for Specific {
-    fn from(element: &hcl::template::Element) -> Self {
+    fn from(element: &Element) -> Self {
         match element {
-            hcl::template::Element::Literal(value) => Self::Literal(value.as_str().into()),
-            hcl::template::Element::Interpolation(value) => value.expr.clone().into(),
-            hcl::template::Element::Directive(value) => {
+            Element::Literal(value) => Self::Literal(value.as_str().into()),
+            Element::Interpolation(value) => value.expr.clone().into(),
+            Element::Directive(value) => {
                 panic!("Unsupported directive: {:?}", value);
             }
         }
     }
 }
 
+// is this rlly necessary? seems like 1:1
 impl From<hcl::Expression> for Specific {
     fn from(value: hcl::Expression) -> Self {
         match value {
             hcl::Expression::Operation(op) => match *op {
-                hcl::expr::Operation::Unary(unary) => Specific::Expression(Box::new(Expression {
+                Operation::Unary(unary) => Specific::Expression(Box::new(Expression {
                     left: Specific::Never,
                     op: match unary.operator {
-                        hcl::expr::UnaryOperator::Not => Operator::Unary(Unary::Not),
-                        hcl::expr::UnaryOperator::Neg => Operator::Unary(Unary::Negative),
+                        UnaryOperator::Not => Operator::Unary(Unary::Not),
+                        UnaryOperator::Neg => Operator::Unary(Unary::Negative),
                     },
                     right: unary.expr.into(),
                 })),
-                hcl::expr::Operation::Binary(binary) => Specific::Expression(Box::new(Expression {
+                Operation::Binary(binary) => Specific::Expression(Box::new(Expression {
                     left: binary.lhs_expr.into(),
                     op: match binary.operator {
-                        hcl::expr::BinaryOperator::Plus => Operator::Binary(Binary::Add),
-                        hcl::expr::BinaryOperator::Minus => Operator::Binary(Binary::Subtract),
-                        hcl::expr::BinaryOperator::Mul => Operator::Binary(Binary::Multiply),
-                        hcl::expr::BinaryOperator::Div => Operator::Binary(Binary::Divide),
-                        hcl::expr::BinaryOperator::Mod => Operator::Binary(Binary::Modulo),
-                        hcl::expr::BinaryOperator::Eq => Operator::Binary(Binary::Equal),
-                        hcl::expr::BinaryOperator::NotEq => Operator::Binary(Binary::NotEqual),
-                        hcl::expr::BinaryOperator::Less => Operator::Binary(Binary::Less),
-                        hcl::expr::BinaryOperator::LessEq => Operator::Binary(Binary::LessOrEqual),
-                        hcl::expr::BinaryOperator::Greater => Operator::Binary(Binary::Greater),
-                        hcl::expr::BinaryOperator::GreaterEq => Operator::Binary(Binary::GreaterOrEqual),
-                        hcl::expr::BinaryOperator::And => Operator::Binary(Binary::And),
-                        hcl::expr::BinaryOperator::Or => Operator::Binary(Binary::Or),
+                        BinaryOperator::Plus => Operator::Binary(Binary::Add),
+                        BinaryOperator::Minus => Operator::Binary(Binary::Subtract),
+                        BinaryOperator::Mul => Operator::Binary(Binary::Multiply),
+                        BinaryOperator::Div => Operator::Binary(Binary::Divide),
+                        BinaryOperator::Mod => Operator::Binary(Binary::Modulo),
+                        BinaryOperator::Eq => Operator::Binary(Binary::Equal),
+                        BinaryOperator::NotEq => Operator::Binary(Binary::NotEqual),
+                        BinaryOperator::Less => Operator::Binary(Binary::Less),
+                        BinaryOperator::LessEq => Operator::Binary(Binary::LessOrEqual),
+                        BinaryOperator::Greater => Operator::Binary(Binary::Greater),
+                        BinaryOperator::GreaterEq => Operator::Binary(Binary::GreaterOrEqual),
+                        BinaryOperator::And => Operator::Binary(Binary::And),
+                        BinaryOperator::Or => Operator::Binary(Binary::Or),
                     },
                     right: binary.rhs_expr.into(),
                 })),

@@ -45,10 +45,42 @@ impl Builder {
             let destination = Self::compose_key(prefix, key);
             match value {
                 Value::Object(value_obj) if value_obj.is_empty() => {
-                    self.context.tree.insert(destination, Specific::Reference(key.clone()));
+                    let new_reference = Specific::Reference(key.clone());
+                    self.context.tree.insert(destination, new_reference);
+                }
+                Value::Object(value_obj) if value_obj.len() == 1 => {
+                    let (inner_key, inner_value) = value_obj.iter().next().unwrap();
+                    // let reference_key = format!("{}({})", destination, inner_key);
+                    let new_reference = Specific::Reference(inner_key.clone());
+                    self.context.tree.insert(destination.clone(), new_reference);
+                    // ^ probably need to be a list to handle multiple root level impl
+                    match inner_value {
+                        Value::Object(inner_value_obj) => {
+                            self = self.apply_object(key, inner_value_obj);
+                        }
+                        _ => {
+                            let new_key = Self::compose_key(destination.as_str(), inner_key);
+                            self.context.tree.insert(new_key, inner_value.into());
+                        }
+                    }
                 }
                 Value::Object(value_obj) => {
                     self = self.apply_object(&destination, value_obj);
+                }
+                Value::Array(value_array) => {
+                    println!("Array: {:?}", value_array);
+                    panic!("Oops! Found an array");
+
+                    // for (_, value) in value_array.iter().enumerate() {
+                    //     match value {
+                    //         Value::Object(value_obj) => {
+                    //             self = self.apply_object(&destination, value_obj);
+                    //         }
+                    //         _ => {
+                    //             self.context.tree.insert(destination.to_string(), value_array.into());
+                    //         }
+                    //     }
+                    // }
                 }
                 Value::String(s) => {
                     let template_expr = hcl::TemplateExpr::from(s.as_str());

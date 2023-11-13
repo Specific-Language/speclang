@@ -1,13 +1,14 @@
+use std::str::FromStr;
+use std::{fmt, str};
 use std::collections::BTreeMap;
 use hcl::Value;
+use indexmap::IndexMap;
 use self::builder::{
     Builder, 
     value::Specific
 };
 
 pub mod builder;
-
-// pub mod evaluator;
 
 pub struct Context {
     pub tree: BTreeMap<String, Specific>
@@ -23,22 +24,6 @@ impl Context {
     pub fn builder() -> Builder {
         Builder::new()
     }
-    
-    pub fn from_str(input: &str) -> Result<Self, String> {
-        let parsed_value: Value = hcl::from_str(input)
-            .map_err(|err| err.to_string())?;
-
-        let input_map = parsed_value.as_object()
-            .ok_or("Expected parsed value to be a Value::Object".to_string())?;
-        
-        Ok(Context::builder()
-            .apply_object("", &input_map)
-            .build())
-    }
-
-    pub fn get_value(&self, name: &str) -> &Specific {
-        self.tree.get(name).unwrap()
-    }
 
     pub fn collect_prefix(&self, prefix: &str, sep: char) -> Vec<(&String, &Specific)> {
         let mut end_bound = prefix.to_string();
@@ -49,6 +34,39 @@ impl Context {
             end_bound.push('\0');
         }
         self.tree.range(prefix.to_string()..end_bound).collect()
+    }
+}
+
+impl FromStr for Context {
+    type Err = String; // todo : specificerror enum
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let parsed_value: Value = hcl::from_str(input)
+            .map_err(|err| err.to_string())?;
+        
+        println!("{:?}", parsed_value);
+        
+        let parsed_obj = parsed_value
+            .as_object()
+            .ok_or("Expected parsed value to be a Value::Object".to_string())?;
+        
+        Ok(Self::from(parsed_obj))
+    }
+}
+
+impl From<&IndexMap<String, Value>> for Context {
+    fn from(input: &IndexMap<String, Value>) -> Self {
+        Context::builder()
+            .apply_object("", input)
+            .build()
+    }
+}
+
+impl fmt::Debug for Context {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Context")
+            .field("tree", &self.tree.iter().collect::<Vec<_>>())
+            .finish()
     }
 }
 
@@ -66,7 +84,7 @@ mod tests {
             c = a + b
         "#;
         let specific = Context::from_str(input).unwrap();
-        println!("{:?}", specific.tree);
+        println!("{:#?}", specific);
         assert_eq!(
             specific.tree.get("a").unwrap(),
             &Specific::Literal(Value::Number(1.into()))
@@ -89,7 +107,7 @@ mod tests {
     fn test_2d() {
         let input = r#"
         point {
-            x = number // shorthand for x impl number {}
+            x = number // shorthand for x number {}
             y = number
         }
 
@@ -100,9 +118,9 @@ mod tests {
             length = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
             // since this isnt a Literal, and its not a Reference, it is a derived value
         
-            from impl function {
+            from function {
                 input = [start, end]
-                output impl line {
+                output line {
                     start = from.input[0]
                     end = from.input[1]
                 }
@@ -131,7 +149,7 @@ mod tests {
         }
         "#;
         let specific = Context::from_str(input).unwrap();
-        println!("{:?}", specific.tree);
+        println!("{:#?}", specific);
     }
     
     #[test]
@@ -147,27 +165,27 @@ mod tests {
             cat {
                 meow = true
             }
-            duck extends bird {
+            duck bird {
                 quack = true
             }
-            wuck extends duck {
+            wuck duck {
                 flying = false
             }
-            bings extends "bird.wings" {
+            bings "bird.wings" {
                 count = 4
             }
             dird {
                 name = string
-                extends wuck {
+                wuck {
                     wings = bings
                 }
-                extends cat {
+                cat {
                     meow = false
                 }
             }
         "#;
         let specific = Context::from_str(input).unwrap();
-        println!("{:?}", specific.tree);
+        println!("{:#?}", specific);
     }
 
     #[test]
@@ -196,21 +214,21 @@ mod tests {
         }
         "#;
         let specific = Context::from_str(input).unwrap();
-        println!("tree: {:?}", specific.tree);
+        println!("{:#?}", specific);
     }
 
     #[test]
     fn test_coordinates() {
         let input = r#"
-            latitude impl number {
+            latitude number {
                 range = "[-90, 90]"
             }
-            longitude impl number {
+            longitude number {
                 range = "[-180, 180]"
             }
             coordinates { 
                 // "any group that fulfills these subtraits is an instance of `coordinates`"
-                latitude impl latitude {}
+                latitude {}
                 longitude {}
             }
             location {
@@ -219,49 +237,53 @@ mod tests {
             }
         "#;
         let specific = Context::from_str(input).unwrap();
-        println!("\ntree: {:?}", specific.tree);
+        println!("{:#?}", specific);
     }
 
     #[test]
-    fn test_treslitros() {
+    fn test_salida() {
         let input = r#"
-            ibu = number // shorthand for `ibu { number {} }`
+        // ibu = number // shorthand for `ibu { number {} }`
 
-            beer {
-                brewery {}
-                ibu {}
-            }
-            
-            // todo : function calls
-            beers = "list(beer)"
+        // beer {
+        //     brewery {}
+        //     ibu {}
+        // }
 
-            brewery {
-                location {}
-                beers {}
-            }
+        // // todo : function calls
+        // // beers = "list(beer)"
 
-            // specific traits are capitalized. proper nouns. can exist in real world
-            Reviresco beer {
-                brewery = TresLitros
-            }
+        // brewery {
+        //     location {} // {} means "can be filled by any specific trait"
+        //     beers {}
+        // }
 
-            TresLitros brewery {
-                location = Salida
-                beers = [Reviresco]
-            }
+        // // specific traits are capitalized. proper nouns. can exist in real world
+        // Reviresco {
+        //     beer {
+        //         brewery = TresLitros // assignment creates a specific "pin" in the trait. a "specific trait"
+        //     }
+        // }
 
-            TresLitros live_music_venue {
-                event_calendar {}
-            }
+        // need to diagram EVERYTHING out here. array vs object after hcl parse, etc
+        TresLitros brewery {
+            location = Salida
+            beers = [Reviresco]
+        }
 
-            Salida location {
-                coordinates {
-                    latitude = 38.5342
-                    longitude = -105.9980
-                }
-            }
+        TresLitros live_music_venue {
+            name string {}
+            event_calendar {}
+        }
+
+        // Salida location {
+        //     coordinates {
+        //         latitude = 38.5342
+        //         longitude = -105.9980
+        //     }
+        // }
         "#;
         let specific = Context::from_str(input).unwrap();
-        println!("\ntree: {:?}", specific.tree);
+        println!("{:#?}", specific);
     }
 }
