@@ -1,0 +1,7 @@
+- determine if should recreate speclang using hcl enum types
+
+- draw out a big picture of the layers required to turn arbitrary raw spec hcl into, say, debate platform visualization website
+
+- foundation for aws backend. stick to as generic as possible. modular for future cut/paste. 
+- how to get/set/etc specs for public access?
+- after that, an api for get/set/etc
